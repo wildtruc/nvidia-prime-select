@@ -1,0 +1,7 @@
+#! /bin/bash
+
+if [ -e /etc/rc.d/rc.nvidia ]; then
+    /etc/rc.d/rc.nvidia &
+fi
+
+exit 0
