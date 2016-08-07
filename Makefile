@@ -10,7 +10,7 @@ install:
 	cp ./xorg.intel.conf $(INSTALL_DIR)/
 	cp ./rc.local $(INSTALL_DIR)/
 	cp ./rc.nvidia $(INSTALL_DIR)/
-	cp ./nvida-prime-select /usr/sbin/fedora-prime-select
+	cp ./nvida-prime-select /usr/sbin/nvidia-prime-select
 	cp nvidia-prime.service /usr/lib/systemd/system/nvidia-prime.service
 	systemctl enable nvidia-prime.service
 
