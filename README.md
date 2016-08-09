@@ -85,10 +85,12 @@ It will remove the *rc.nvidia* and restore *rc.local* at its previous state.
 
 Usually when the Nvidia® GPU starts the screen become black at first, if it is, this is all good.
 
-## Know issue
+## Known issues
 The script has been test on Gnome Shell, Gnome Classic, Cinnamon, LXQT, Kodi.
 
-The only issue comes with Gnome Classic, desktop crash on final start.
+The only issue comes with Gnome Classic, desktop crash on final start. I'm not sure it comes from Gnome Classic itself.
+
+For **Fedora** users upgrading from **Fedora 23** to **24** using the **dnf** tools, don't forget to re-enable the service after after the first reboot. You have to probably reset your display *xrandr* config too. 
 
 ## What won't be done
 I try to set *nvidiaonly* as a desktop entry, sadly process crash each time. So a *.desktop* point entry is probably not a good idea.
