@@ -21,17 +21,17 @@ Thus, I discided to go deeper to solve that particular issue and a few others as
   ```
 
 ## Options
- - **intel** : use the default GPU
- - **nvidia** : use the **Nvidia®** GPU
- - **nvidiaonly** : use the **Nvidia®** GPU permanently
- - **remove** : go back to intel/nvidia options chooser
+ - *intel* : use the default GPU
+ - *nvidia* : use the **Nvidia®** GPU
+ - *nvidiaonly* : use the **Nvidia®** GPU permanently
+ - *remove* : go back to intel/nvidia options chooser
 
 ## Before all
 The first thing to do is to set correctly your screens with the default desktop tool in the config menu. This is mandatory.
 
-Gnome and Cinnamon use a **monitors.xml**(~/.config/monitors.xml) file to keep your screen config and overide any other setup if it doesn't match the xml file.
+Gnome and Cinnamon use a *monitors.xml*(~/.config/monitors.xml) file to keep your screen config and overide any other setup if it doesn't match the xml file.
 
-**nvidia-prime-select** comes with a **library.conf** file to set custom installation directories up (same case if you come from an other distro). If you're in this case, edit it first before launching/installing anything.
+**nvidia-prime-select** comes with a *library.conf* file to set custom installation directories up (same case if you come from an other distro). If you're in this case, edit it first before launching/installing anything.
 
 Example of my custom driver install in Fedora 23:
 ```sh
@@ -63,16 +63,25 @@ Copy/paste the library.conf file manually if you intend to use it :
 
 When done, launch the commandline, your superuser or admin password will be ask. Then logout and restart your session.
 
-The script will setup your actual **xrandr** configuration automatically and will use a custom **rc.local** file if you choose **nvidiaonly** option.
+The script will setup your actual *xrandr* configuration automatically and will use a custom *rc.local* file if you choose *nvidiaonly* option.
 
-To stop it, use :
+To set permanent *nvidiaonly* option. Use first the *nvidia* option if you haven't already set it and then the *nvidiaonly* option.
+  ```sh
+  nvidia-prime-select nvidia
+  nvidia-prime-select nvidiaonly
+  ```
+At the next boot the laptop will start with the Nvidia® GPU.
+
+To stop using this feature, type :
   ```sh 
   nvidia-prime-select remove
   ```
-## Notes
-**Option "NoLogo" "true"** in **xorg.nvidia.conf** is aparently useless, I only put it here by habits.
+It will remove the *rc.nvidia* and restore *rc.local* at its previous state.
 
-**Option "DPI" "96 x 96"** is set by default in the **xorg.nvidia.conf** because **xrandr** set it at **75** by default. If you have a weaker **Nvidia®** GPU, it's maybe a good thing to let it at **75** if you want to play some games smoother.
+## Notes
+*Option "NoLogo" "true"* in *xorg.nvidia.conf* is aparently useless, I only put it here by habits.
+
+*Option "DPI" "96 x 96"* is set by default in the *xorg.nvidia.conf* because *xrandr* set it at *75* by default. If you have a weaker **Nvidia®** GPU, it's maybe a good thing to let it at *75* if you want to play some games smoother.
 
 Usually when the Nvidia® GPU starts the screen become black at first, if it is, this is all good.
 
@@ -82,6 +91,6 @@ The script has been test on Gnome Shell, Gnome Classic, Cinnamon, LXQT, Kodi.
 The only issue comes with Gnome Classic, desktop crash on final start.
 
 ## What won't be done
-I try to set **nvidiaonly** as a desktop entry, sadly process crash each time. So a **.desktop** point entry is probably not a good idea.
+I try to set *nvidiaonly* as a desktop entry, sadly process crash each time. So a *.desktop* point entry is probably not a good idea.
 
-Who cares ! **rc.local** custom file rocks! 
+Who cares ! *rc.local* custom file rocks! 
