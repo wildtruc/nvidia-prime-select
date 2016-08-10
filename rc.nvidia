@@ -4,7 +4,7 @@ if [ -h /etc/X11/xinit/xinitrc.d/intel ]; then
     until [ $(ps -A | grep -c "tty.*gdm") -eq 1 ]; do
 	sleep 1
     done
-    sleep 5
+    sleep 10
     /usr/sbin/fedora-prime-select nvidia
 fi
 
