@@ -16,8 +16,7 @@ clean_files() {
     '/etc/X11/xorg.conf.d/99-nvidia.conf'
     '/etc/X11/xorg.conf'
   )
-# remove unuseful files, but check
-# if they exist first
+# remove unuseful files, but check if they exist first
 	for file in "${files[@]}"; do
 		if [[ -h $file ]]; then
 			printf "Deleting: %s\n" "$file"
@@ -34,10 +33,6 @@ nvidia32_lib_file='/etc/ld.so.conf.d/nvidia-lib32.conf'
 nvidia64_lib_file='/etc/ld.so.conf.d/nvidia-lib64.conf'
 conf=$1
 # check any custom dirs for nvidia libraries linking
-#nv_drv_32='/opt/nvidia/lib'
-#nv_drv_64='/opt/nvidia/lib64'
-#nv_xorg_path='/opt/nvidia/xorg/modules'
-#rc_dir='/etc/rc.d'
 nv_drv_32='/usr/lib/nvidia'
 nv_drv_64='/usr/lib64/nvidia'
 nv_xorg_path='/usr/lib64/nvidia/xorg'
@@ -51,9 +46,6 @@ bash_line="if [ -e $rc_dir/rc.nvidia ]; then
 fi
 exit 0\n"
 
-
-#xrandr_source_cmd=$(xrandr --listproviders| grep "Source"| head -n1| sed -n "s/^.*name://p")
-#xrandr_sink_cmd=$(xrandr --listproviders| grep "Sink"| head -n1| sed -n "s/^.*name://p")
 current_display=$(xrandr --current| grep "connected"| grep "[0-9]\{3,4\}[x]"| sed -n "s/\ (.*$//p")
 connected_display=$(xrandr --current| grep -w "connected"| awk '{print $1}')
 xrandr_outputs(){
@@ -108,7 +100,6 @@ go_for_nvidia(){
 	clean_files
     bus_id=$(lspci | grep NVIDIA | awk '{print $1 + 0}')
     if [[ ! $(cat $install_dir/xorg.nvidia.conf|grep -o "$bus_id:0:0") ]]; then
-#    	sed "s/bus_id/$bus_id/g" $install_dir/xorg.nvidia.conf > /etc/X11/xorg.conf
     	perl -ni -pe "s|bus_id|$bus_id|i" $install_dir/xorg.nvidia.conf
     fi
     if [[ ! $(cat $install_dir/xorg.nvidia.conf|grep -o "$nv_xorg_path") ]]; then
@@ -136,7 +127,6 @@ go_for_intel(){
 		printf '/usr/lib' > $nvidia32_lib_file
 	fi
 }
-#xrandr_outputs
 
 case $1 in
 	nvidia )
@@ -185,13 +175,8 @@ case $1 in
 		printf "\n\tYou need to logout from your session after each function.\n\n"
 		exit 1
 	;;
-#	* )
-#	printf "Usage:\n  %s intel|nvidia|nvidiaonly/remove\n" 
-#	exit 1
-#	;;
 esac
 
 ldconfig
-
 printf "Successfully switched to %s completed.\n" "$1"
 printf "Please logout for changes to take effect.\n"
