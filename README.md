@@ -90,7 +90,9 @@ The script has been test on Gnome Shell, Gnome Classic, Cinnamon, LXQT, Kodi.
 
 The only issue comes with Gnome Classic, desktop crash on final start. I'm not sure it comes from Gnome Classic itself.
 
-For **Fedora** users upgrading from **Fedora 23** to **24** using the **dnf** tools, don't forget to re-enable the service after the first reboot. You have to probably reset your display *xrandr* config too. 
+For **Fedora** users upgrading from **Fedora 23** to **24** using the **dnf** tools, don't forget to re-enable the service after the first reboot. You have to probably reset your display *xrandr* config too.
+
+Since **Fedora 24**, *rc.nivia* schedule time set is not enough to let *GDM* fully start. Need to extend from 5 to 10 secondes (update 10/08/16).
 
 ## What won't be done
 I try to set *nvidiaonly* as a desktop entry, sadly process crash each time. So a *.desktop* point entry is probably not a good idea.
