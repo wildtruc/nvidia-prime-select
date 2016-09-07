@@ -6,12 +6,12 @@ all: install
 
 install:
 	mkdir -p $(INSTALL_DIR)
-	cp ./xorg.nvidia.conf $(INSTALL_DIR)/
-	cp ./xorg.intel.conf $(INSTALL_DIR)/
-	cp ./rc.local $(INSTALL_DIR)/
-	cp ./rc.nvidia $(INSTALL_DIR)/
-	cp ./nvidia-prime-select /usr/sbin/nvidia-prime-select
-	cp nvidia-prime.service /usr/lib/systemd/system/nvidia-prime.service
+	cp -f ./xorg.nvidia.conf $(INSTALL_DIR)/
+	cp -f ./xorg.intel.conf $(INSTALL_DIR)/
+	cp -f ./rc.local $(INSTALL_DIR)/
+	cp -f ./rc.nvidia $(INSTALL_DIR)/
+	cp -f ./nvidia-prime-select /usr/sbin/nvidia-prime-select
+	cp -f ./nvidia-prime.service /usr/lib/systemd/system/nvidia-prime.service
 	systemctl enable nvidia-prime.service
 
 uninstall:
