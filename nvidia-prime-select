@@ -3,9 +3,11 @@ set -e
 
 # check if root and ask for password if not
 if [[ $EUID -ne 0 ]]; then
-  printf 'Script must be executed as root :\n'
-  su -c $0
-#  exit 1
+  printf 'Script must be executed as root or sudo :\n'
+#  ## FIXME : selinux permission issue in su -c cmd
+#  OPT=$1
+#  su -c "$0 $OPT"
+  exit 1
 fi
 
 clean_files() {
@@ -28,7 +30,7 @@ clean_files() {
 		fi
 	done
 }
-install_dir='/etc/fedora-prime'
+install_dir='/etc/nvidia-prime'
 nvidia32_lib_file='/etc/ld.so.conf.d/nvidia-lib32.conf'
 nvidia64_lib_file='/etc/ld.so.conf.d/nvidia-lib64.conf'
 conf=$1
@@ -98,6 +100,7 @@ xrandr_outputs(){
 }
 go_for_nvidia(){
 	clean_files
+	keyword=nvidia
     bus_id=$(lspci | grep NVIDIA | awk '{print $1 + 0}')
     if [[ ! $(cat $install_dir/xorg.nvidia.conf|grep -o "$bus_id:0:0") ]]; then
     	perl -ni -pe "s|bus_id|$bus_id|i" $install_dir/xorg.nvidia.conf
@@ -117,6 +120,7 @@ go_for_nvidia(){
 }
 go_for_intel(){
 	clean_files
+	keyword=intel
 	if [[ $current_display ]]; then
 		xrandr_outputs
 	fi
@@ -170,6 +174,7 @@ case $1 in
 		printf "\tintel\t\tSwitch to Intel GPU.\n"
 		printf "\tnvidia\t\tSwitch to Nvidia GPU.\n"
 		printf "\tnvidiaonly\tSwitch to Nvidia GPU permanently.\n"
+		printf "\tusage: use nvidia option first, then nvidiaonly for permanent switch.\n"
 		printf "\tremove\t\tRemove permanent Nvidia switch.\n"
 		printf "\thelp\t\tthis help.\n"
 		printf "\n\tYou need to logout from your session after each function.\n\n"
@@ -178,5 +183,10 @@ case $1 in
 esac
 
 ldconfig
-printf "Successfully switched to %s completed.\n" "$1"
-printf "Please logout for changes to take effect.\n"
+if [ -f /etc/X11/xinit/xinitrc.d/$keyword ]; then
+	printf "Successfully switched to %s completed.\n" "$1"
+	printf "Please logout for changes to take effect.\n"
+else
+	printf "Switch to %s doesn't ended as expected\n" "$1"
+	printf "Please, run script again or check custom values."
+fi	
