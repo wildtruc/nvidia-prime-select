@@ -4,7 +4,7 @@ Before=gdm.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/sbin/fedora-prime-select intel
+ExecStart=/usr/sbin/nvidia-prime-select intel
 
 [Install]
 WantedBy=multi-user.target
