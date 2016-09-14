@@ -142,6 +142,7 @@ case $1 in
 	nvidiaonly )
 #		conf=nvidia
 #		go_for_nvidia
+		keyword=nvidia
 		if [ -s $install_dir/rc.nvidia ]; then
 			if [ ! -h $rc_dir/rc.nvidia ]; then
 				ln -sf $install_dir/rc.nvidia $rc_dir/rc.nvidia
@@ -184,9 +185,9 @@ esac
 
 ldconfig
 if [ -f /etc/X11/xinit/xinitrc.d/$keyword ]; then
-	printf "Successfully switched to %s completed.\n" "$1"
+	printf "\nSuccessfully switched to %s completed.\n" "$1"
 	printf "Please logout for changes to take effect.\n"
 else
-	printf "Switch to %s doesn't ended as expected\n" "$1"
-	printf "Please, run script again or check custom values."
+	printf "\nSwitch to %s doesn't ended as expected\n" "$1"
+	printf "Please, run script again or check custom values.\n"
 fi	
