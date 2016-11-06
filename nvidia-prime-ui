@@ -1,0 +1,77 @@
+#! /bin/bash
+
+# color setup
+end='</span>'
+
+vB='<span color=\"#005400\" weight=\"bold\">'
+j='<span color=\"#FF6800\">'
+rBB='<span color=\"#FF3300\" font=\"20\">'
+# prime_setup
+prime_msg_01="$vB\Select the Prime setup you would like to use$end:"
+prime_msg_02="Default is currently set to $j%s$end."
+menu_prime_01="Set Prime to Intel device"
+menu_prime_02="Set Prime to Nvidia device"
+menu_prime_03="Set permanently Prime to Nvidia device"
+m_prime_01="intel"
+m_prime_02="nvidia"
+m_prime_03="permanent nvidia"
+wrn_prime_01="Prime will be set to $j%s$end."
+wrn_prime_02=""
+
+root_id(){
+	if [[ $EUID -gt 0 ]] ; then
+		zenity --password --title="Zenvidia (admin password)" | sudo -S $0
+		exit 0
+	fi
+}
+
+setup_prime(){
+	zenity --height=100 --title="Zenvidia prime setup" --question --no-wrap \
+	--icon-name=swiss_knife --text="$vB$(printf "$wrn_prime_01" "$_prime")$end" \
+	--cancel-label='Cancel' --ok-label='Setup'
+	if [ $? = 1 ]; then $0; fi
+	for pset in "${_pset[@]}"; do
+		/usr/sbin/nvidia-prime-select $pset
+	done	
+}
+root_id
+unset setup_list setup_option _pset
+setup_option=(
+"$menu_prime_01;$m_prime_01;intel;/etc/X11/xinit/xinitrc.d/intel"
+"$menu_prime_02;$m_prime_02;nvidia;/etc/X11/xinit/xinitrc.d/nvidia"
+"$menu_prime_03;$m_prime_03;nvidia;/etc/rc.d/rc.nvidia"
+)
+n=1
+for p_set in "${setup_option[@]}"; do
+	pp_set=$(printf "$p_set"|cut -d';' -f1)
+	pc_set=$(printf "$p_set"|cut -d';' -f3)
+	pc_msg=$(printf "$p_set"|cut -d';' -f2)
+	pc_file=$(printf "$p_set"|cut -d';' -f4)
+	setup_list+=("false")
+	setup_list+=("$n")
+	setup_list+=("$pp_set")
+	if [ $(ls -1 $pc_file| grep -c "$pc_set" ) -eq 1 ]; then
+		current_set=$pc_msg
+	fi
+	n=$[ $n+1 ]
+done
+if [ $current_set ]; then
+	prime_msg="$prime_msg_01\n$(printf "$prime_msg_02" "$current_set")."
+else
+	prime_msg="$prime_msg_01\nNo device is currently set."
+fi
+
+menu_prime=$(zenity --width=340  --list --radiolist --hide-header \
+--title="Zenvidia prime setup" --text "$vB$prime_msg$end" \
+--column "1" --column "2" --column "3" --separator=";" --hide-column=2 \
+"${setup_list[@]}" --ok-label='Select' --cancel-label='Exit')
+if [ $? = 1 ]; then exit 0; fi
+case $menu_prime in
+	"1") _pset=( "intel"); _prime="$m_prime_01" ;;
+	"2") _pset=( "nvidia" ); _prime="$m_prime_02" ;;
+	"3") _pset=( "nvidia" "nvidiaonly" ); _prime="$m_prime_03" ;;
+esac
+setup_prime
+
+exit 0
+
