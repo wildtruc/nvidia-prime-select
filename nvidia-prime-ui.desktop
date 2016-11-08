@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=nvidia-prime
+Comment=NVIDIA Prime switcher
+Exec=nvidia-prime-ui
+Icon=nvidia-prime.png
+Categories=Application;Settings;
+
