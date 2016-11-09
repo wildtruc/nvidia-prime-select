@@ -19,7 +19,7 @@ wrn_prime_02=""
 # su cmd switcher: su (0), sudo (1)
 su_type=0
 
-if [ $su_type 0 ]; then su_cmd='su -c'; else 'sudo -S'; fi
+if [ $su_type = 0 ]; then su_cmd='su -c'; else 'sudo -S'; fi
 root_id(){
 	if [[ $EUID -gt 0 ]] ; then
 		zenity --password --title="Zenvidia (admin password)" | $su_cmd $0
