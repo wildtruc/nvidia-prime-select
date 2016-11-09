@@ -58,7 +58,7 @@ for p_set in "${setup_option[@]}"; do
 	fi
 	n=$[ $n+1 ]
 done
-if [ $current_set ]; then
+if [[ "$current_set" ]]; then
 	prime_msg="$prime_msg_01\n$(printf "$prime_msg_02" "$current_set")."
 else
 	prime_msg="$prime_msg_01\nNo device is currently set."
