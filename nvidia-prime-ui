@@ -6,8 +6,9 @@ vB='<span color=\"#005400\" weight=\"bold\">'
 j='<span color=\"#FF6800\">'
 rBB='<span color=\"#FF3300\" font=\"20\">'
 # prime_setup
-prime_msg_01="$vB\Select the Prime setup you would like to use$end:"
+prime_msg_01="Select the Prime setup you would like to use:"
 prime_msg_02="Default is currently set to $j%s$end."
+prime_msg_03=""
 menu_prime_01="Set Prime to Intel device"
 menu_prime_02="Set Prime to Nvidia device"
 menu_prime_03="Set permanently Prime to Nvidia device"
@@ -15,7 +16,7 @@ m_prime_01="intel"
 m_prime_02="nvidia"
 m_prime_03="permanent nvidia"
 wrn_prime_01="Prime will be set to $j%s$end."
-wrn_prime_02=""
+wrn_prime_02="\nYou may now restart the user session to take effect."
 # su cmd switcher: su (0), sudo (1)
 su_type=0
 
@@ -29,7 +30,7 @@ root_id(){
 
 setup_prime(){
 	zenity --height=100 --title="Zenvidia prime setup" --question --no-wrap \
-	--icon-name=nvidia-prime --text="$vB$(printf "$wrn_prime_01" "$_prime")$end" \
+	--icon-name=nvidia-prime --text="$vB$(printf "$wrn_prime_01$wrn_prime_02" "$_prime")$end" \
 	--cancel-label='Cancel' --ok-label='Setup'
 	if [ $? = 1 ]; then $0; fi
 	for pset in "${_pset[@]}"; do
