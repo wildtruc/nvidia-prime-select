@@ -17,7 +17,6 @@ clean_files() {
     '/etc/X11/xorg.conf.d/00-avoid-glamor.conf'
     '/etc/X11/xorg.conf.d/99-nvidia.conf'
     '/etc/X11/xorg.conf'
-    '/etc/rc.d/rc.nvidia'
   )
 # remove unuseful files, but check if they exist first
 	for file in "${files[@]}"; do
