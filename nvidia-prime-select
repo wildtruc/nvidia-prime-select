@@ -1,4 +1,24 @@
 #!/usr/bin/env bash
+
+# License:
+#   This program is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU Lesser General Public
+#   License as published by the Free Software Foundation; either
+#   version 2.1 of the License, or (at your option) any later
+#   version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU Lesser General Public License for more details.
+#
+#   You should have received a copy of the GNU Lesser General Public
+#   License along with this program.  If not, see
+#   <https://www.gnu.org/licenses/>.
+#
+## You can redistribute it as you wish : GPL v3
+## author : wildtruc@noneltd.net
+
 set -e
 
 # check if root and ask for password if not
@@ -113,6 +133,7 @@ go_for_nvidia(){
     	xrandr_outputs
     fi
     ln -sf $install_dir/xinitrc.nvidia /etc/X11/xinit/xinitrc.d/nvidia
+    go_remove
     printf "$nv_drv_64" > $nvidia64_lib_file
     if [[ -d $nv_drv_32 ]]; then
 		printf "$nv_drv_32" > $nvidia32_lib_file
@@ -126,9 +147,22 @@ go_for_intel(){
 	fi
 	ln -sf $install_dir/xinitrc.intel /etc/X11/xinit/xinitrc.d/intel
 	cp -f $install_dir/xorg.intel.conf /etc/X11/xorg.conf
+	go_remove
 	printf '/usr/lib64' > $nvidia64_lib_file
 	if [[ -f $nvidia32_lib_file ]]; then
 		printf '/usr/lib' > $nvidia32_lib_file
+	fi
+}
+go_remove(){
+	if [ -h $rc_dir/rc.nvidia ]; then
+		rm -f $rc_dir/rc.nvidia
+		if [ -e $rc_dir/rc.local ]; then
+			if [ $(cat $rc_dir/rc.local| grep -c "nvidia") -gt 0 ]; then
+				sed -n -i "/if.*nvidia*.*/,/fi/d;p" $rc_dir/rc.local
+			else
+				rm -f $rc_dir/rc.local
+			fi
+		fi
 	fi
 }
 
@@ -140,8 +174,10 @@ case $1 in
 		go_for_intel
 	;;
 	nvidiaonly )
-#		conf=nvidia
-#		go_for_nvidia
+		if ! [ -h /etc/x11/xinit/xinitrc.d/nvidia ]; then
+			conf=nvidia
+			go_for_nvidia
+		fi
 		keyword=nvidia
 		if [ -s $install_dir/rc.nvidia ]; then
 			if [ ! -h $rc_dir/rc.nvidia ]; then
@@ -159,16 +195,7 @@ case $1 in
 		fi
 	;;
 	remove )
-		if [ -h $rc_dir/rc.nvidia ]; then
-			rm -f $rc_dir/rc.nvidia
-			if [ -e $rc_dir/rc.local ]; then
-				if [ $(cat $rc_dir/rc.local| grep -c "\n") -gt 3 ]; then
-					sed -n -i "/if.*nvidia*.*/,/fi/d;p" $rc_dir/rc.local
-				else
-					rm -f $rc_dir/rc.local
-				fi
-			fi
-		fi
+		go_remove
 	;;
 	*|help )
 		printf "Usage:\t$(basename $0 ) intel|nvidia|nvidiaonly|remove\n\n"
