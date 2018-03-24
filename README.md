@@ -12,6 +12,18 @@ Thus, I discided to go deeper to solve that particular issue and a few others as
  - Start **Nvidia®** GPU instead the default one whatever the end user desktop you choose.
 
 --------------
+# Update message 2018-03-24
+Nivdia-prime-ui has been updated to policy-kit auth instead old 'su/sudo' one.
+Nvidia-prime-select is still a pure supoeruser script.
+
+
+Also added a librairies config editor, an 'update' option to makefile and fix some code syntax.
+Librairy.conf is now install by default and checked if configured.
+
+Hope you'll like those changes and don't forget to send any bug you get. :)
+
+Don't forget to update your config after update (nvidia-prime-select will be reset to default **intel**)
+--------------
 
 # Usage
 
@@ -41,6 +53,8 @@ Example of my custom driver install in Fedora 23:
   rc_dir='/etc/rc.d'
 ```
 
+Or use the simpliest way and launch **nvidia-prime-ui** from settings menu.
+
 **nvidia-prime-select** come also with 2 default xorg configs for **Intel®** and **Nvidia®**. Edit them as you wish before launching install command.
 
 ## Install
@@ -51,15 +65,14 @@ Example of my custom driver install in Fedora 23:
   sudo make install
   ```
 
+To update, run :
+  ```sh
+  sudo make update
+  ```
 To uninstall, run :
   ```sh
   sudo make uninstall
   ```
-  
-Copy/paste the library.conf file manually if you intend to use it :
-  ```sh
-  cp -f library.conf /etc/nvidia-prime-select/
-  ``` 
 
 When done, launch the commandline, your superuser or admin password will be ask. Then logout and restart your session.
 

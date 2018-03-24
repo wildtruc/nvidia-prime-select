@@ -19,7 +19,7 @@
 ## You can redistribute it as you wish : GPL v3
 ## author : wildtruc@noneltd.net
 
-# color setup
+# color setup TODO < color.conf
 end='</span>'
 vB='<span color=\"#005400\" weight=\"bold\">'
 j='<span color=\"#FF6800\">'
@@ -31,37 +31,53 @@ prime_msg_03=""
 menu_prime_01="Set Prime to Intel device"
 menu_prime_02="Set Prime to Nvidia device"
 menu_prime_03="Set permanently Prime to Nvidia device"
+menu_prime_04="Edit Librairies config file"
 m_prime_01="intel"
 m_prime_02="nvidia"
 m_prime_03="permanent nvidia"
 wrn_prime_01="Prime will be set to $j%s$end."
 wrn_prime_02="\nYou may now restart the user session to take effect."
+lib_conf=/etc/nvidia-prime/library.conf
 # su cmd switcher: su (0), sudo (1)
-su_type=0
+#su_type=0
 
-if [ $su_type = 0 ]; then su_cmd='su -c'; else 'sudo -S'; fi
-root_id(){
-	if [[ $EUID -gt 0 ]] ; then
-		zenity --password --title="Zenvidia (admin password)" | $su_cmd $0
-		exit 0
+#if [ $su_type = 0 ]; then su_cmd='su -c'; else 'sudo -S'; fi
+#root_id(){
+#	if [[ $EUID -gt 0 ]] ; then
+#		zenity --password --title="Zenvidia (admin password)" | $su_cmd $0
+#		exit 0
+#	fi
+#}
+## su cmd manage by polkit
+
+edit_conf(){
+	edit_lib_conf=$(zenity --width=500 --height=400 --title="Libraries conf editor" --text-info \
+	--editable --text="$vB\\Edit libraries and rc.d path to fit your system install.$end" \
+	--filename="$lib_conf" --checkbox="Confirm to overwrite")
+	if [ $(printf "$edit_lib_conf"| sed -En "s/^(.*)='(.*)'$/\2/g;p"| grep -c .) -gt 0 ]; then
+		pkexec sh -c "echo -e \"$edit_lib_conf\" > $lib_conf"
+		zenity --height=100 --title="Libraries conf editor" --info --no-wrap \
+		--icon-name=nvidia-prime --timeout=5 --text="$vB\\Libraries data saved.$end"
 	fi
+	bash -c nvidia-prime-ui
+	exit 0
 }
-
 setup_prime(){
 	zenity --height=100 --title="Zenvidia prime setup" --question --no-wrap \
 	--icon-name=nvidia-prime --text="$vB$(printf "$wrn_prime_01$wrn_prime_02" "$_prime")$end" \
 	--cancel-label='Cancel' --ok-label='Setup'
 	if [ $? = 1 ]; then $0; fi
 	for pset in "${_pset[@]}"; do
-		/usr/sbin/nvidia-prime-select $pset
+		pkexec /usr/sbin/nvidia-prime-select $pset
 	done	
 }
-root_id
+#root_id
 unset setup_list setup_option _pset
 setup_option=(
 "$menu_prime_01;$m_prime_01;intel;/etc/X11/xinit/xinitrc.d/intel"
 "$menu_prime_02;$m_prime_02;nvidia;/etc/X11/xinit/xinitrc.d/nvidia"
 "$menu_prime_03;$m_prime_03;nvidia;/etc/rc.d/rc.nvidia"
+"$menu_prime_04;;"
 )
 n=1
 for p_set in "${setup_option[@]}"; do
@@ -92,7 +108,8 @@ if [ $? = 1 ]; then exit 0; fi
 case $menu_prime in
 	"1") _pset=( "intel"); _prime="$m_prime_01" ;;
 	"2") _pset=( "nvidia" ); _prime="$m_prime_02" ;;
-	"3") _pset=( "nvidia" "nvidiaonly" ); _prime="$m_prime_03" ;;
+	"3") _pset=( "nvidiaonly" ); _prime="$m_prime_03" ;;
+	"4") edit_conf ;;
 esac
 setup_prime
 

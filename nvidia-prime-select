@@ -24,11 +24,30 @@ set -e
 # check if root and ask for password if not
 if [[ $EUID -ne 0 ]]; then
   printf 'Script must be executed as root or sudo :\n'
-#  ## FIXME : selinux permission issue in su -c cmd
-#  OPT=$1
-#  su -c "$0 $OPT"
+## use polkit to set admin rights.
   exit 1
 fi
+
+install_dir='/etc/nvidia-prime'
+nvidia32_lib_file='/etc/ld.so.conf.d/nvidia-lib32.conf'
+nvidia64_lib_file='/etc/ld.so.conf.d/nvidia-lib64.conf'
+conf=$1
+# check any custom dirs for nvidia libraries linking
+nv_drv_32='/usr/lib/nvidia'
+nv_drv_64='/usr/lib64/nvidia'
+nv_xorg_path='/usr/lib64/nvidia/xorg'
+rc_dir='/etc/rc.d'
+if [ -s $install_dir/library.conf ]; then
+	## test libray conf content before loading.
+	if [ $(cat $install_dir/library.conf| sed -En "s/^(.*)='(.*)'$/\2/g;p"| grep -c .) -gt 0 ]; then
+		. $install_dir/library.conf
+	fi
+fi
+# bash lines to insert in rc.local for permanent switch
+bash_line="if [ -e $rc_dir/rc.nvidia ]; then
+    $rc_dir/rc.nvidia &
+fi
+exit 0\n"
 
 clean_files() {
   files=(
@@ -42,31 +61,14 @@ clean_files() {
 	for file in "${files[@]}"; do
 		if [[ -h $file ]]; then
 			printf "Deleting: %s\n" "$file"
-			[ -e $file ]&& rm -f "$file"
+			if [[ -e $file ]]; then rm -f "$file"; fi
 		elif [[ -f $file ]]; then
 			printf "Backing up: %s as %s\n" "$file" "$file.prime.bak"
-			[ -s $file ]&& cp "$file" "$file.prime.bak"
-			[ -s $file ]&& rm -f "$file"
+			if [[ -s $file ]]; then cp "$file" "$file.prime.bak"; fi
+			if [[ -s $file ]]; then rm -f "$file"; fi
 		fi
 	done
 }
-install_dir='/etc/nvidia-prime'
-nvidia32_lib_file='/etc/ld.so.conf.d/nvidia-lib32.conf'
-nvidia64_lib_file='/etc/ld.so.conf.d/nvidia-lib64.conf'
-conf=$1
-# check any custom dirs for nvidia libraries linking
-nv_drv_32='/usr/lib/nvidia'
-nv_drv_64='/usr/lib64/nvidia'
-nv_xorg_path='/usr/lib64/nvidia/xorg'
-rc_dir='/etc/rc.d'
-if [ -s $install_dir/library.conf ]; then
-	. $install_dir/library.conf
-fi
-# bash lines to insert in rc.local for permanent switch
-bash_line="if [ -e $rc_dir/rc.nvidia ]; then
-    $rc_dir/rc.nvidia &
-fi
-exit 0\n"
 
 current_display=$(xrandr --current| grep "connected"| grep "[0-9]\{3,4\}[x]"| sed -n "s/\ (.*$//p")
 connected_display=$(xrandr --current| grep -w "connected"| awk '{print $1}')
@@ -92,16 +94,16 @@ xrandr_outputs(){
 		if [[ $conf == nvidia ]]; then
 			connected_output=$output_class'-'$output_num
 		else
-			[[ $output_class == VGA ]]&& output_num=1
+			if [[ $output_class == VGA ]]; then output_num=1; fi
 			connected_output=$output_class$output_num
 		fi
-		if [[ $(xrandr --current| grep "$all_dsp"| grep -o "[0-9]\{3,4\}[x]") ]]; then
+		if [[ $(xrandr --current| grep "$all_dsp"| egrep -o "[0-9]{3,4}[x]") ]]; then
 			current_output=$(xrandr --current| grep "$all_dsp"| grep "[0-9]\{3,4\}[x]"| sed -n "s/\ (.*$//p")
 			current_output=$( printf "$current_output"| sed -n "s/\ /\_/g;p"|tr "\n" " ")
 			for scrn in ${current_output}; do
 				scrn=$(printf "$scrn"| sed -n "s/\_/\ /g;p")
 				if [[ $(printf "$scrn"| grep -o "primary") != '' ]]; then
-					scrn=$(echo "$scrn"| sed -n "s/ \(primary\)//;s/$/ primary/p")
+					scrn=$(echo "$scrn"| sed -En "s/ (primary)//;s/$/ primary/p")
 				fi
 				mode=( ${scrn} )
 				for pos in ${mode[2]}; do
@@ -154,10 +156,10 @@ go_for_intel(){
 	fi
 }
 go_remove(){
-	if [ -h $rc_dir/rc.nvidia ]; then
+	if [[ -h $rc_dir/rc.nvidia ]]; then
 		rm -f $rc_dir/rc.nvidia
-		if [ -e $rc_dir/rc.local ]; then
-			if [ $(cat $rc_dir/rc.local| grep -c "nvidia") -gt 0 ]; then
+		if [[ -e $rc_dir/rc.local ]]; then
+			if [[ $(cat $rc_dir/rc.local| grep -c "nvidia") -gt 0 ]]; then
 				sed -n -i "/if.*nvidia*.*/,/fi/d;p" $rc_dir/rc.local
 			else
 				rm -f $rc_dir/rc.local
@@ -179,13 +181,13 @@ case $1 in
 			go_for_nvidia
 		fi
 		keyword=nvidia
-		if [ -s $install_dir/rc.nvidia ]; then
-			if [ ! -h $rc_dir/rc.nvidia ]; then
+		if [[ -s $install_dir/rc.nvidia ]]; then
+			if [[ ! -h $rc_dir/rc.nvidia ]]; then
 				ln -sf $install_dir/rc.nvidia $rc_dir/rc.nvidia
 			fi
-			if [ -s $rc_dir/rc.local ]; then
+			if [[ -s $rc_dir/rc.local ]]; then
 				if [ $(cat $rc_dir/rc.local| grep -c "rc.nvidia") -eq 0 ]; then
-					perl -ni -pe "s|exit 0|$bash_line|i" $rc_dir/rc.local 
+					perl -ni -pe "s|exit 0|$bash_line|i" $rc_dir/rc.local
 				fi
 				chmod 755 $rc_dir/rc.local
 			else
@@ -211,7 +213,7 @@ case $1 in
 esac
 
 ldconfig
-if [ -f /etc/X11/xinit/xinitrc.d/$keyword ]; then
+if [[ -f /etc/X11/xinit/xinitrc.d/$keyword ]]; then
 	printf "\nSuccessfully switched to %s completed.\n" "$1"
 	printf "Please logout for changes to take effect.\n"
 else
