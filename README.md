@@ -23,6 +23,7 @@ Librairy.conf is now install by default and checked if configured.
 Hope you'll like those changes and don't forget to send any bug you get. :)
 
 Don't forget to update your config after update (nvidia-prime-select will be reset to default **intel**)
+
 --------------
 
 # Usage
