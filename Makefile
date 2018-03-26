@@ -13,6 +13,7 @@ install:
 	install -Dm644 -t $(INSTALL_DIR)/ rc.local
 	install -Dm644 -t $(INSTALL_DIR)/ rc.nvidia
 	install -Dm644 -t $(INSTALL_DIR)/ library.conf
+	install -Dm644 -t $(INSTALL_DIR)/ lock
 	install -Dm644 -t /usr/share/pixmaps/ nvidia-prime.png
 	install -Dm644 -t /usr/share/applications/ nvidia-prime-ui.desktop
 	install -Dm644 -t /usr/lib/systemd/system/ nvidia-prime.service
@@ -23,6 +24,7 @@ install:
 update:
 	install -C -Dm755 -t /usr/bin/ nvidia-prime-ui
 	install -C -Dm755 -t /usr/sbin/ nvidia-prime-select
+	install -Dm644 -t $(INSTALL_DIR)/ lock
 	install -Dm644 -t /usr/share/pixmaps/ nvidia-prime.png
 	install -Dm644 -t /usr/share/applications/ nvidia-prime-ui.desktop
 	install -C -Dm644 -t /usr/lib/systemd/system/ nvidia-prime.service

@@ -12,10 +12,12 @@ Thus, I discided to go deeper to solve that particular issue and a few others as
  - Start **Nvidia®** GPU instead the default one whatever the end user desktop you choose.
 
 --------------
-# Update message 2018-03-24
+# Update message
+## 2018-03-24
 Nivdia-prime-ui has been updated to policy-kit auth instead old 'su/sudo' one.
 Nvidia-prime-select is still a pure supoeruser script.
-
+## 2018-03-26
+Discovered a huge bug that prevent prime to be set to permanant nvidia. This is fixed.
 
 Also added a librairies config editor, an 'update' option to makefile and fix some code syntax.
 Librairy.conf is now install by default and checked if configured.
