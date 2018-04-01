@@ -15,9 +15,12 @@ Thus, I discided to go deeper to solve that particular issue and a few others as
 # Update message
 ## 2018-03-24
 Nivdia-prime-ui has been updated to policy-kit auth instead old 'su/sudo' one.
-Nvidia-prime-select is still a pure supoeruser script.
+Nvidia-prime-select is still a pure superuser script.
 ## 2018-03-26
 Discovered a huge bug that prevent prime to be set to permanant nvidia. This is fixed.
+## 2018-04-01
+Dev test was running on Fedora 24, since upgraded to Fedora 27 it appears that xrandr on modesettings is broken and dosn't work anymore for discret nvidia.
+I'm trying to find a work-around.
 
 Also added a librairies config editor, an 'update' option to makefile and fix some code syntax.
 Librairy.conf is now install by default and checked if configured.
@@ -39,7 +42,7 @@ Don't forget to update your config after update (nvidia-prime-select will be res
  - *intel* : use the default GPU
  - *nvidia* : use the **Nvidia®** GPU
  - *nvidiaonly* : use the **Nvidia®** GPU permanently
- - *remove* : go back to intel/nvidia options chooser
+ - *remove* : set back to default
 
 ## Before all
 The first thing to do is to set correctly your screens with the default desktop tool in the config menu. This is mandatory.
