@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Nvidia-Prime
+Exec=/etc/nvidia-prime/display.prime
+NoDisplay=true
+X-GNOME-Autostart-Phase=DisplayServer
+X-MATE-Autostart=true
+Hidden=true

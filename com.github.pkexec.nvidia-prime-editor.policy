@@ -6,14 +6,14 @@
 	<vendor>Winestarter</vendor>
 	<vendor_url>https://github.com/wildtruc/nvidia-prime-select</vendor_url>
 	<action id="com.github.pkexec.nvidia-prime">
-		<message>Admin priviledges are required to change librairies conf file</message>
+		<message>Admin priviledges are required to overwrite conf file</message>
 		<icon_name>nvidia-prime</icon_name>
 		<defaults>
 			<allow_any>auth_admin</allow_any>
 			<allow_inactive>auth_admin</allow_inactive>
 			<allow_active>auth_admin</allow_active>
 		</defaults>
-		<annotate key="org.freedesktop.policykit.exec.path">echo</annotate>
+		<annotate key="org.freedesktop.policykit.exec.path">/usr/bin/sh</annotate>
 		<annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
 	</action>
 
