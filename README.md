@@ -31,6 +31,9 @@ There stil some issue with some session managers, see **Known Issues** at page b
 
 Hope you'll like those changes and don't forget to send any bug you get. :)
 
+### 2018-04-13
+Big mistake in repos upload :s. Forgot to send library.conf with last upgrade. My apologies.
+
 --------------
 
 # Usage
