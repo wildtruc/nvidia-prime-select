@@ -48,7 +48,7 @@ Big mistake in repos upload :s. Forgot to send library.conf with last upgrade. M
  - *nvidia* : use the **Nvidia®** GPU
  
 ## Before all
-The first thing to do is to set correctly your screens with the default desktop tool in the config menu. This is not mandatory but useful.
+In old version it was mandatory to edit library.conf first in case of special Nvidia drivers install. Now you can setup them directly with nvidia-prime-ui before entering you new setup. 
 
 Gnome and Cinnamon use a *monitors.xml*(~/.config/monitors.xml) file to keep your screen config and overide any other setup if it doesn't match the xml file.
 
@@ -85,14 +85,14 @@ To uninstall, run :
   sudo make uninstall
   ```
 
-When done, launch the commandline, your superuser or admin password will be ask. Then logout and restart your session.
+When done, launch the commandline as admin/superuser or with nvidia-prime-ui as normal user. Then logout and restart your session.
 
 The script will setup your actual *xrandr* configuration automatically.
 
 ## Notes
 *Option "DPI" "96 x 96"* is set by default in the *xorg.nvidia.conf* because *xrandr* set it at *75* by default. If you have a weaker **Nvidia®** GPU, it's maybe a good thing to let it at *75* if you want to play some games smoother.
 
-Usually when the Nvidia® GPU starts the screen display some wierd black lines at first, if it is, it means that Nvidia® GPU is started.
+Usually when the Nvidia® GPU starts the screen display some weird black lines at first, if it is, it means that Nvidia® GPU is started.
 
 ## Known issues
 The script has been test on Gnome Shell, Gnome Classic, Cinnamon, LXQT, Kodi (for previous version, lightdm only for new one).
@@ -100,7 +100,7 @@ The script has been test on Gnome Shell, Gnome Classic, Cinnamon, LXQT, Kodi (fo
  - The only issue comes with Gnome Classic, desktop crash on final start. I'm not sure it comes from Gnome Classic itself.
  - For **Fedora** users upgrading from **Fedora 23** to **24** using the **dnf** tools, don't forget to re-enable the service after the first reboot. You have to probably reset your display *xrandr* config too.
  - Since **Fedora 24**, *rc.nivia* schedule time set is not enough to let *GDM* fully start. Need to extend from 5 to 10 secondes (update 10/08/16).
- - Session restart on gdm (gnome3) may vause result in a blank screen. In previous nvidia-prime-select, this issues was fix by inserting a delay waiting for full gdm start before insert xrandr command line. Try to uncomment 'sleep' function in /etc/nvidia-prime/xinitrc.prime and different delay. If it doesn't fix, think to change session manager to lightdm.
- - In some case, xrandr display config (~.config/monitors.xml) could conflict with nvidia-prime-select xrandr auto conf function. First, remove ~.config/monitors.xml, and restart your session. If it doesn't fix, set your dispal again and disable nvidia-prime.desktop autostart (menu > system > pref > personal > autostart), then restart your session.
- - At session restart login has a strange behaviour and could take 30/40s to display correctly. It maybe a polkit issue, but nt sure.
+ - Session restart on gdm (gnome3) may cause result in a blank screen. In previous nvidia-prime-select, this issues was fix by inserting a delay waiting for full gdm start before insert xrandr command line. Try to uncomment 'sleep' function in /etc/nvidia-prime/xinitrc.prime and different delay. If it doesn't fix, think to change session manager to lightdm.
+ - In some case, xrandr display config (~.config/monitors.xml) could conflict with nvidia-prime-select xrandr auto conf function. First, remove ~.config/monitors.xml, and restart your session. If it doesn't fix, set your display again and disable nvidia-prime.desktop autostart (menu > system > pref > personal > autostart), then restart your session.
+ - At session restart login has a strange behaviour and could take 30/40s to display correctly. It maybe a polkit issue, but not sure. Need debug and figure out.
  - Do not hesitate to send issue reports on Github page.
