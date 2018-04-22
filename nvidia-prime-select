@@ -45,15 +45,22 @@ if [ -s $install_dir/library.conf ]; then
 		. $install_dir/library.conf
 	fi
 fi
+## FIXME
+## grub section have to be filtered in case of distros specifics.
 grub_config(){
+	## look at /proc/version to detect distro variant.
 	boot_key='/boot/vmlinuz-'$(uname -r)
 	if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=1.*$") -eq 0 ]; then
 		if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*blacklist=nouveau.*$") -eq 0 ]; then
 			blacklist=' nouveau.modeset=0 rd.driver.blacklist=nouveau'
 		fi
 		modset='nvidia-drm.modeset=1'$blacklist
+		## add nouveau blacklist to modeproe.d conigs list.
+		if ! [[ -s /etc/modprobe.d/blacklist-nouveau.conf ]]; then
+			echo "blacklist nouveau" > /etc/modprobe.d/blacklist-nouveau.conf
+		fi
 		sed -Eni -e "s|(linux.*$boot_key.*ro)(.*)$|\1 $modset \2|g;p" /boot/grub2/grub.cfg
-		reboot_text='Grub has been modifeid for Nvidia Prime modesetting.\nPLease reboot the system for changes to take effect.'
+		reboot_text='Grub has been modified for Nvidia Prime modesetting.\nPLease reboot the system for changes to take effect.'
 	fi
 }
 ## First of all, configure grub for modesetting and blacklist all nouveau drivers.
