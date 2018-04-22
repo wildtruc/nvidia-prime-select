@@ -34,6 +34,9 @@ Hope you'll like those changes and don't forget to send any bug you get. :)
 ### 2018-04-16
 Big mistake in repos upload :s. Forgot to send library.conf with last upgrade. My apologies.
 
+### 2018-04-22
+Multi display issue, see **CHANGELOG.md**.
+
 --------------
 
 # Usage

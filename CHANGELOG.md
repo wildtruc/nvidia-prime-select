@@ -1,4 +1,9 @@
 ### Change Log
+*( 22/04/13 ) v0.9.10*
+ - Nvidia-prime-select was untested on multi display. It appeared that actual xrandr detection and sets failed, also display.prime was needed more delay before lauching because of xramdr monitors.xml file sets conflict.
+ - Above is fixed (hopefully), there's still a strange wallpaper behaviour diplayed in double on my laptop desktop. Please, report if you have the same issue.
+ - Note: laptop is not my default machine, and I can't figure out all possible issues by my self, or wait, like it actually the case, my PC's mother board to die to disover them.
+ 
 *( 18/04/13 ) v0.9.9*
  - Importante change done. Look's more like a complete rewrite.
  - NEW USER: nothing special, just type as superuser or admin : (sudo) make install.

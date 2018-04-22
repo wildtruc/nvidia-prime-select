@@ -22,7 +22,7 @@
 ## this script have to be launch with user's session started.
 
 set -e
-## check if root and exit if not
+# check if root and exit if not
 if [[ $EUID -ne 0 ]]; then
   printf 'Script must be executed as root or sudo :\n'
 ## using polkit to set admin rights.
@@ -45,18 +45,22 @@ if [ -s $install_dir/library.conf ]; then
 		. $install_dir/library.conf
 	fi
 fi
-## First of all, configure grub for modesetting and blacklist all nouveau drivers.
-boot_key='/boot/vmlinuz-'$(uname -r)
-if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=1.*$") -eq 0 ]; then
-	if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*blacklist=nouveau.*$") -eq 0 ]; then
-		blacklist=' nouveau.modeset=0 rd.driver.blacklist=nouveau'
+grub_config(){
+	boot_key='/boot/vmlinuz-'$(uname -r)
+	if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=1.*$") -eq 0 ]; then
+		if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*blacklist=nouveau.*$") -eq 0 ]; then
+			blacklist=' nouveau.modeset=0 rd.driver.blacklist=nouveau'
+		fi
+		modset='nvidia-drm.modeset=1'$blacklist
+		sed -Eni -e "s|(linux.*$boot_key.*ro)(.*)$|\1 $modset \2|g;p" /boot/grub2/grub.cfg
+		reboot_text='Grub has been modifeid for Nvidia Prime modesetting.\nPLease reboot the system for changes to take effect.'
 	fi
-	modset='nvidia-drm.modeset=1'$blacklist
-	sed -Eni -e "s|(linux.*$boot_key.*ro)(.*)$|\1 $modset \2|g;p" /boot/grub2/grub.cfg
-	reboot_text='Grub has been modifeid for Nvidia Prime modesetting.\nPLease reboot the system for changes to take effect.'
-fi
+}
+## First of all, configure grub for modesetting and blacklist all nouveau drivers.
+grub_config
 current_display=$(xrandr --current| grep "connected"| grep "[0-9]\{3,4\}[x]"| sed -n "s/\ (.*$//p")
 connected_display=( "$(xrandr --current| grep -w "connected"| sed -En "s|^(.*)\ (\(.*)$|\1|p")" )
+
 bus_id_query(){
 	## detect and config pci ids.
 	bus_vga_list=$(lspci | grep VGA| awk '{print $1" "$5}'| sed -En "s|^.([0-9])\:.([0-9])\.([0-9])\ (.*)$|bus_\L\4=\1:\2:\3|p")
@@ -81,14 +85,12 @@ clean_files() {
 xrandr_outputs(){
 	## xrandr have to be set as user wishes to give to script proper xrandr sets.
 	## This is mandatory.
+#	conf=nvidia
 	unset scrn
 	unset def 
 	if [[ $conf == nvidia ]]; then
 		xrandr_source='NVIDIA-0'
 		xrandr_sink='modesetting'
-#	else
-#		xrandr_source="Intel"
-#		xrandr_sink='Intel'
 	fi
 	if [[ $conf == nvidia ]]; then
 		xrandr_init="xrandr --setprovideroutputsource $xrandr_sink $xrandr_source --auto --output VGA-0 --off"
@@ -102,14 +104,12 @@ xrandr_outputs(){
 		echo "$_dsp"
 		output_class=$(printf "$_dsp"|awk '{print $1}'| sed -En "s|^(\w*[A-Z])[-]?(.*)$|\1|p")
 		output_num=$(printf "$_dsp"|awk '{print $1}'| sed -En "s|^(\w*[A-Z])[-]?(.*)$|\2|p")
-#		dash_cnt(){ dash=${_dsp//[^-]}; printf "${#dash}"; }
 		dash_cnt=$( dash=${_dsp//[^-]}; printf "${#dash}"; )
 		if [[ $conf == nvidia ]]; then
 			if [ $dash_cnt -eq 0 ]; then
 				output_num=$output_num'-'$output_num
 			fi
 			connected_output=$output_class'-'$output_num
-#			connected_output=$output_class'-'$(printf "$output_num"| cut -d'-' -f1)
 		else
 			if [[ $_dsp =~ ^.*-.*$ ]]; then output_num=$(printf "$output_num"| cut -d'-' -f1); fi
 			if [[ $output_class == VGA ]]; then output_num=1; fi
@@ -123,43 +123,32 @@ xrandr_outputs(){
 			fi
 			check_primary_set=( $(echo -e $current_output| tr ' ' '\n') )
 			
-#			def_display=$(printf "$current_output"| cut -d' ' -f1)
 			if [ ${#check_primary_set[@]} -gt 3 ]; then rank=4; prim=' --primary'; else rank=3; prim=''; fi
-#			if [[ $def_display =~ ^VGA ]]; then
-			if [[ $connected_output =~ ^VGA ]]; then
-				is_primary=$(printf "$current_output"| cut -d' ' -f3)
-				if [[ $is_primary =~ ^primary ]]; then
-#					disable_output=' --output '$def_display' --off'
-					disable_output=' --output '$connected_output' --off'
-				fi
-			else
+			if ! [[ $connected_output =~ ^VGA ]]; then
 				def_res=$(printf "$current_output"| cut -d' ' -f$rank)
 				def_horiz=$(printf "$def_res"| sed -En "s|^(.*)x(.*)\+.*\+.*$|\1|p")
 				def_verti=$(printf "$def_res"| sed -En "s|^(.*)x(.*)\+.*\+.*$|\2|p")
 				def_pos=$(printf "$def_res"| sed -En "s|^.*x.*\+(.*\+.*)$|\1|;s|\+|x|p")
 				## don't set display as primary at this step. this here basic xrandr display setting.
 				## user have to set default primary at user session in case of multiple screen.
-#				enable_output='--output '$def_display' --mode '$def_horiz'x'$def_verti' --pos '$def_pos$prim
 				enable_output='--output '$connected_output' --mode '$def_horiz'x'$def_verti' --pos '$def_pos$prim
-			fi
-			if [[ $conf == nvidia ]]; then
-				if [[ $current == nvidia ]]; then
-					if [[ -n $disable_output && $(printf "$disable_output"| grep -c "VGA") -eq 0 ]]; then
-						disable_output=' --output VGA-0 --off'
-					fi
-				else
-					if [[ ! -n $disable_output || $(printf "$disable_output"| grep -c "VGA") -eq 0 ]]; then
-						disable_output=' --output VGA-0 --off'
-					fi
-				fi
+				_outputs+=($enable_output)
 			fi
 		else
 			disable_output=' --output '$connected_output' --off'
+			_outputs+=($disable_output)
 		fi
 	done
+	if [[ $conf == nvidia ]]; then
+		if [ $(echo -e "${_outputs[*]}"| grep -c "VGA") -eq 0 ]; then
+			disable_output='--output VGA-0 --off'
+			_outputs+=($disable_output)
+		fi
+	fi
 	IFS=$ifs
-	xrandr_config="xrandr $enable_output$disable_output"
-	echo -e "#! /bin/bash\n\n$xrandr_config\n" > $install_dir/display.prime
+	xrandr_config="xrandr${_outputs[*]}"
+	
+	echo -e "#! /bin/bash\n\nsleep $delay\n$xrandr_config\n" > $install_dir/display.prime
 	if [ $(stat -c %a $install_dir/display.prime) -ne 755 ]; then
 		chmod 755 $install_dir/display.prime
 	fi
@@ -282,6 +271,7 @@ display_config(){
 }
 go_for_nvidia(){
 	clean_files
+	delay=5
 	ctrl_key=nvidia
 	display_config
 	abi_crtl
@@ -293,6 +283,7 @@ go_for_nvidia(){
 }
 go_for_intel(){
 	clean_files
+	delay=5
 	ctrl_key=intel
 	display_config
 }
@@ -312,7 +303,7 @@ case $1 in
 	default ) go_default ;;
 	nvidia ) go_for_nvidia ;;
 	intel ) go_for_intel ;;
-	test) abi_crtl; exit 0;;
+	test) xrandr_outputs; exit 0;;
 	*|help )
 		printf "Usage:\t$(basename $0 ) intel|nvidia|default\n\n"
 		printf "\tintel\t\tSwitch to Intel GPU.\n"
