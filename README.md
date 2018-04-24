@@ -37,6 +37,9 @@ Big mistake in repos upload :s. Forgot to send library.conf with last upgrade. M
 ### 2018-04-22
 Multi display issue, see **CHANGELOG.md**.
 
+### 2018-04-24
+Added options config file, report.sample and some fixes to grub and xrandr sections. See **CHANGELOG.md**.
+
 --------------
 
 # Usage

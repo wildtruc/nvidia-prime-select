@@ -22,11 +22,21 @@
 ## TODO
 # indiquer la précédence de monitor.xml généré par l'ui de xrandr.
 
-
-# color setup TODO < color.conf
+vn='<span weight=\"normal\">'
+vb='<span weight=\"bold\">'
+if [[ -s /etc/nvidia-prime/options.conf ]]; then
+	. /etc/nvidia-prime/options.conf
+	if [ $font_style -gt 0 ]; then
+	## clear background
+		vn='<span color=\"#00A400\" weight=\"normal\">'
+		vb='<span color=\"#00A400\" weight=\"bold\">'
+	else
+	## dark background
+		vn='<span color=\"#005400\" weight=\"normal\">'
+		vb='<span color=\"#005400\" weight=\"bold\">'
+	fi
+fi
 end='</span>'
-vn='<span color=\"#005400\" weight=\"normal\">'
-vb='<span color=\"#005400\" weight=\"bold\">'
 j='<span color=\"#FF6800\">'
 rBB='<span color=\"#FF3300\" font=\"20\">'
 ## prime_setup
@@ -37,6 +47,7 @@ menu_prime_01="Set Prime to Intel device"
 menu_prime_02="Set Prime to Nvidia device"
 menu_prime_03="Edit Libraries config file"
 menu_prime_04="Edit current Xorg config file"
+menu_prime_05="Edit options config file"
 # ref
 m_prime_01="intel"
 m_prime_02="nvidia"
@@ -46,7 +57,20 @@ wrn_prime_02="\nYou may now restart the user session to take effect."
 # nvidia-prime-select path and files
 xorg_path=/etc/nvidia-prime
 lib_conf=/etc/nvidia-prime/library.conf
+opt_conf=/etc/nvidia-prime/options.conf
 ## su cmd is currently manages by polkit
+## setup color, grub, user's xrandr options.
+edit_options(){
+	edit_options_conf=$(zenity --width=500 --height=400 --title="options conf editor" --icon-name=nvidia-prime \
+	--text-info --editable --filename="$opt_conf" --checkbox="Confirm to overwrite" \
+	--text="$vb\\Edit nvidia-prime-select and GUI options.$end")
+	if [ $? = 0 ]; then
+		pkexec sh -c "echo -e \"$edit_options_conf\" > $opt_conf"
+		notify-send -t 5000 -u low  "Options data saved."
+	fi
+	bash -c nvidia-prime-ui
+	exit 0
+}
 edit_conf(){
 	edit_lib_conf=$(zenity --width=500 --height=400 --title="libraries conf editor" --icon-name=nvidia-prime \
 	--text-info --editable --filename="$lib_conf" --checkbox="Confirm to overwrite" \
@@ -75,15 +99,20 @@ edit_xorg(){
 }
 setup_prime(){
 	if [[ -s $HOME/.config/monitors.xml ]]; then
-		prev_conf="\n\nNotice$vn: Display looks already configured by$j xrandr$end session tool UI.\nUI settings take precedence over$j nvidia-prime-select$end auto set.$end"
+		prev_conf="\n\nNotice$vn: Display looks already configured by$j xrandr$end session tool UI.\nUI settings take precedence over$j nvidia-prime-select$end auto set.\nBe aware it could create conflicts at session restart (blank screen).$end"
 	fi
 	xrandr_msg="$vb\n\nCheck your display settings before restart.$end"
 	zenity --height=100 --title="nvidia-prime-select setup" --question --no-wrap \
 	--icon-name=nvidia-prime --text="$vb$(printf "$wrn_prime_01$wrn_prime_02" "$_prime")$prev_conf$xrandr_msg$end" \
 	--cancel-label='Cancel' --ok-label='Setup'
-	if [ $? = 1 ]; then $0; fi
-	pkexec /usr/sbin/nvidia-prime-select $_pset
-	notif_msg=$(printf "Session will restart with %s hardware.\nPlease restart your session." "$_pset")
+	if [ $? = 0 ]; then
+		pkexec /usr/sbin/nvidia-prime-select $_pset
+		notif_msg=$(printf "Session will restart with %s hardware.\nPlease restart your session." "$_pset")
+	else
+		bash -c nvidia-prime-ui
+		exit 0
+	fi
+	
 }
 #root_id
 unset setup_list setup_option _pset
@@ -92,6 +121,7 @@ setup_option=(
 "$menu_prime_02;$m_prime_02;/etc/X11/xorg.conf"
 "$menu_prime_03;;"
 "$menu_prime_04;;"
+"$menu_prime_05;;"
 )
 n=1
 for p_set in "${setup_option[@]}"; do
@@ -111,8 +141,8 @@ else
 	prime_msg="$prime_msg_01\nNo device is currently set."
 fi
 
-menu_prime=$(zenity --width=340  --list --radiolist --hide-header \
---title="Zenvidia prime setup" --text "$vb$prime_msg$end" \
+menu_prime=$(zenity --width=340 --list --radiolist --hide-header \
+--title="nvidia-prime-select" --text "$vb$prime_msg$end" \
 --column "1" --column "2" --column "3" --separator=";" --hide-column=2 \
 "${setup_list[@]}" --ok-label='Select' --cancel-label='Exit')
 if [ $? = 1 ]; then exit 0; fi
@@ -121,7 +151,10 @@ case $menu_prime in
 	"2") _pset="nvidia"; _prime="$m_prime_02" ;;
 	"3") edit_conf ;;
 	"4") edit_xorg ;;
+	"5") edit_options ;;
 esac
 setup_prime
-notify-send -t 5000 -u low --icon=nvidia-prime "Nvidia-prime setup applied." "$notif_msg."
+if [[ $notif_msg != '' ]]; then
+	notify-send -t 5000 -u low --icon=nvidia-prime "Nvidia-prime setup applied." "$notif_msg."
+fi
 exit 0

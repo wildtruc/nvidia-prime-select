@@ -38,36 +38,55 @@ nv_drv_32='/usr/lib/nvidia'
 nv_drv_64='/usr/lib64/nvidia'
 nv_xorg_path='/usr/lib64/nvidia/xorg'
 ## check any custom dirs for nvidia librairies linking
-if [ -s $install_dir/library.conf ]; then
+if [[ -s $install_dir/library.conf ]]; then
 	## TODO Here special distro library config could take place.
 	## test library conf content before loading.
 	if [ $(cat $install_dir/library.conf| sed -En "s/^(.*)='(.*)'$/\2/g;p"| grep -c .) -gt 0 ]; then
 		. $install_dir/library.conf
 	fi
 fi
-## FIXME
-## grub section have to be filtered in case of distros specifics.
-grub_config(){
-	## look at /proc/version to detect distro variant.
-	boot_key='/boot/vmlinuz-'$(uname -r)
-	if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=1.*$") -eq 0 ]; then
-		if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*blacklist=nouveau.*$") -eq 0 ]; then
-			blacklist=' nouveau.modeset=0 rd.driver.blacklist=nouveau'
-		fi
-		modset='nvidia-drm.modeset=1'$blacklist
-		## add nouveau blacklist to modeproe.d conigs list.
-		if ! [[ -s /etc/modprobe.d/blacklist-nouveau.conf ]]; then
-			echo "blacklist nouveau" > /etc/modprobe.d/blacklist-nouveau.conf
-		fi
-		sed -Eni -e "s|(linux.*$boot_key.*ro)(.*)$|\1 $modset \2|g;p" /boot/grub2/grub.cfg
-		reboot_text='Grub has been modified for Nvidia Prime modesetting.\nPLease reboot the system for changes to take effect.'
-	fi
-}
-## First of all, configure grub for modesetting and blacklist all nouveau drivers.
-grub_config
+## default options (have to be manual set/reset in options.conf of by nvidia-prime-ui)
+delay=5
+intel_nodelay=1
+cfg_grub=1
+cfg_modeset=1
+nv_modeset=0
+
+if [[ -s $install_dir/options.conf ]]; then
+	. $install_dir/options.conf
+fi
 current_display=$(xrandr --current| grep "connected"| grep "[0-9]\{3,4\}[x]"| sed -n "s/\ (.*$//p")
 connected_display=( "$(xrandr --current| grep -w "connected"| sed -En "s|^(.*)\ (\(.*)$|\1|p")" )
 
+## FIXME ?
+## grub section have to be filtered in case of distros specifics.
+grub_config(){
+	if [ $cfg_grub -gt 0 ]; then
+		## look at /proc/version to detect distro variant.
+		boot_key='/boot/vmlinuz-'$(uname -r)
+		modeset_check=$(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=.*$")
+		if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=$nv_modeset.*$") -eq 0 ]; then
+			if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*blacklist=nouveau.*$") -eq 0 ]; then
+				blacklist=' nouveau.modeset=0 rd.driver.blacklist=nouveau'
+			fi
+			if [ $cfg_modeset -gt 0 ]; then					
+				modset='nvidia-drm.modeset='$nv_modeset$blacklist
+			else
+				modset=$blacklist
+			fi
+			## add nouveau blacklist to modeproe.d configs list.
+			if ! [[ -s /etc/modprobe.d/blacklist-nouveau.conf ]]; then
+				echo "blacklist nouveau" > /etc/modprobe.d/blacklist-nouveau.conf
+			fi
+			if [ $modeset_check -gt 0 ]; then
+				sed -Eni -e "s|(linux.*$boot_key.*ro) (nvidia-drm.modeset=[0-9])(.*)$|\1 $modset\3|g;p" /boot/grub2/grub.cfg
+			else
+				sed -Eni -e "s|(linux.*$boot_key.*ro)(.*)$|\1 $modset \2|g;p" /boot/grub2/grub.cfg
+			fi
+			reboot_text='Grub has been modified for Nvidia Prime modesetting.\nPLease reboot the system for changes to take effect.'
+		fi
+	fi
+}
 bus_id_query(){
 	## detect and config pci ids.
 	bus_vga_list=$(lspci | grep VGA| awk '{print $1" "$5}'| sed -En "s|^.([0-9])\:.([0-9])\.([0-9])\ (.*)$|bus_\L\4=\1:\2:\3|p")
@@ -88,23 +107,10 @@ clean_files() {
 		fi
 	done
 }
-
 xrandr_outputs(){
 	## xrandr have to be set as user wishes to give to script proper xrandr sets.
 	## This is mandatory.
 #	conf=nvidia
-	unset scrn
-	unset def 
-	if [[ $conf == nvidia ]]; then
-		xrandr_source='NVIDIA-0'
-		xrandr_sink='modesetting'
-	fi
-	if [[ $conf == nvidia ]]; then
-		xrandr_init="xrandr --setprovideroutputsource $xrandr_sink $xrandr_source --auto --output VGA-0 --off"
-	else
-		xrandr_init=''
-	fi
-	echo -e "#! /bin/bash\n\n#sleep 5\n$xrandr_init" > $install_dir/xinitrc.prime
 	ifs=$IFS
 	IFS=$(echo -en "\n\b")
 	for _dsp in ${connected_display[@]}; do
@@ -144,17 +150,29 @@ xrandr_outputs(){
 		else
 			disable_output=' --output '$connected_output' --off'
 			_outputs+=($disable_output)
+			_disabled+=($disable_output)
 		fi
 	done
 	if [[ $conf == nvidia ]]; then
 		if [ $(echo -e "${_outputs[*]}"| grep -c "VGA") -eq 0 ]; then
 			disable_output='--output VGA-0 --off'
 			_outputs+=($disable_output)
+			_disabled+=($disable_output)
 		fi
 	fi
 	IFS=$ifs
 	xrandr_config="xrandr${_outputs[*]}"
-	
+	if [[ $conf == nvidia ]]; then
+		xrandr_source='NVIDIA-0'
+		xrandr_sink='modesetting'
+	fi
+	if [[ $conf == nvidia ]]; then
+#		xrandr_init="xrandr --setprovideroutputsource $xrandr_sink $xrandr_source --auto --output VGA-0 --off"
+		xrandr_init="xrandr --setprovideroutputsource $xrandr_sink $xrandr_source --auto ${_disabled[*]}"
+	else
+		xrandr_init=''
+	fi
+	echo -e "#! /bin/bash\n\n#sleep $delay\n$xrandr_init" > $install_dir/xinitrc.prime
 	echo -e "#! /bin/bash\n\nsleep $delay\n$xrandr_config\n" > $install_dir/display.prime
 	if [ $(stat -c %a $install_dir/display.prime) -ne 755 ]; then
 		chmod 755 $install_dir/display.prime
@@ -163,7 +181,6 @@ xrandr_outputs(){
 		chmod 755 $install_dir/xinitrc.prime
 	fi
 }
-
 session_manager(){
 	home=/home/$(ls -l "$(pwd)"| cut -d' ' -f3 | sed -n "2p")	
 	## configure each session manager if deteed: gdm kdm sddm lightdm
@@ -278,7 +295,7 @@ display_config(){
 }
 go_for_nvidia(){
 	clean_files
-	delay=5
+#	delay=5
 	ctrl_key=nvidia
 	display_config
 	abi_crtl
@@ -290,7 +307,7 @@ go_for_nvidia(){
 }
 go_for_intel(){
 	clean_files
-	delay=5
+	if [ $intel_nodelay -eq 1 ]; then delay=0; else delay=5; fi
 	ctrl_key=intel
 	display_config
 }
@@ -301,6 +318,8 @@ go_default(){
 		printf '/usr/lib' > $nvidia32_lib_file
 	fi
 }
+## configure grub for modesetting and blacklist all nouveau drivers.
+grub_config
 bus_id_query
 current=$(file -p /etc/X11/xorg.conf| sed -En "s|^.*xorg.(.*).conf$|\1|p")
 if [[ -s /var/log/Xorg.0.log ]]; then
@@ -310,7 +329,7 @@ case $1 in
 	default ) go_default ;;
 	nvidia ) go_for_nvidia ;;
 	intel ) go_for_intel ;;
-	test) xrandr_outputs; exit 0;;
+#	test) xrandr_outputs; exit 0;;
 	*|help )
 		printf "Usage:\t$(basename $0 ) intel|nvidia|default\n\n"
 		printf "\tintel\t\tSwitch to Intel GPU.\n"

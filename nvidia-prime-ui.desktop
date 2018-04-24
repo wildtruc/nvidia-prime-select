@@ -5,5 +5,5 @@ Name=nvidia-prime
 Comment=NVIDIA Prime switcher
 Exec=nvidia-prime-ui
 Icon=nvidia-prime.png
-Categories=Application;Settings;
+Categories=Application;System;Settings;
 

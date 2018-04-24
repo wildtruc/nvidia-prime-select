@@ -1,0 +1,20 @@
+### Main:
+**distro**: `cat /proc/version`. Help to get distro name and get a tip for possible per distro auto conf.
+
+**session-manager**:
+
+**grub.cfg**: default menuentry 'linux/linux16' whole line. As su or sudo -S prompt, `cat /boot/grub2/grub.cfg| grep "linux.*$(uname -r)"`.
+
+**xrandr providers**: `xrandr --listproviders`, respectively under intel, then nvidia device (if can be started).
+ - intel:
+ - nvidia:
+
+**xrandr displays**: `xrandr --query`
+ - intel:
+ - nvidia:
+
+### Optional:
+**xorg log**: `cat /var/log/Xorg.0.log`
+
+**lsmod**: to get intel, nvidia, bbswitch (if any) loaded modules. `lsmod | grep "nvidia\|bbswitch\|intel"`
+

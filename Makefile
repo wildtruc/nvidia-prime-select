@@ -13,6 +13,8 @@ install:
 	install -Dm644 -t $(INSTALL_DIR)/ xorg.nvidia.conf
 	install -Dm644 -t $(INSTALL_DIR)/ xorg.intel.conf
 	install -Dm644 -t $(INSTALL_DIR)/ library.conf
+	install -Dm644 -t $(INSTALL_DIR)/ options.conf
+	install -Dm644 -t $(INSTALL_DIR)/ report.sample
 	install -Dm644 -t $(INSTALL_DIR)/ nvidia-prime.desktop
 	install -Dm644 -t $(INSTALL_DIR)/ nvidia-session.desktop
 	install -Dm644 -t /usr/share/pixmaps/ nvidia-prime.png
@@ -27,6 +29,8 @@ update:
 	install -C -Dm755 -t /usr/sbin/ nvidia-prime-select
 	install -C -Dm644 -t $(INSTALL_DIR)/ xorg.nvidia.conf
 	install -C -Dm644 -t $(INSTALL_DIR)/ xorg.intel.conf
+	install -Dm644 -t $(INSTALL_DIR)/ options.conf
+	install -Dm644 -t $(INSTALL_DIR)/ report.sample
 	install -C -Dm644 -t $(INSTALL_DIR)/ nvidia-prime.desktop
 	install -C -Dm644 -t $(INSTALL_DIR)/ nvidia-session.desktop
 	install -Dm644 -t /usr/share/pixmaps/ nvidia-prime.png
@@ -36,21 +40,10 @@ update:
 	sh ./changelog.sh
 
 uninstall:
-	# new
-#	rm -rf $(INSTALL_DIR)
-#	rm -f /usr/sbin/nvidia-prime-select
-#	rm -f /usr/bin/nvidia-prime-ui
-#	rm -f /usr/share/pixmaps/nvidia-prime.png
-#	rm -f /usr/share/applications/nvidia-prime-ui.desktop
-#	rm -f /usr/share/polkit-1/actions/com.github.pkexec.nvidia-prime-*
-#	rm -f /etc/X11/xorg.conf
-	# old (will be remove in next upload)
-	systemctl disable nvidia-prime.service
 	rm -rf $(INSTALL_DIR)
 	rm -f /usr/sbin/nvidia-prime-select
 	rm -f /usr/bin/nvidia-prime-ui
 	rm -f /usr/share/pixmaps/nvidia-prime.png
 	rm -f /usr/share/applications/nvidia-prime-ui.desktop
-	rm -f /usr/lib/systemd/system/nvidia-prime.service
 	rm -f /usr/share/polkit-1/actions/com.github.pkexec.nvidia-prime-*
-	rm -f /etc/X11/xinit/xinitrc.d/nvidia
+#	rm -f /etc/X11/xorg.conf
