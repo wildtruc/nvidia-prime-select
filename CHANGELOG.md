@@ -1,4 +1,7 @@
 ### Change Log
+*( 2018/06/27 ) v0.9.12*
+ - Makefile: changed 'sh' to 'bash' prefix in command line on user clever comment.
+ 
 *( 2018/04/24 ) v0.9.11*
  - Add a options config file editable by nvidia-prime-ui because some users seems to have big trouble with grub config. Options file default sample is send with comment.
  - options are :
@@ -11,7 +14,6 @@
  - Rewrote grub config section to be more intuitive. It separatly add modeset and 'nouveau' blacklist. Modeset could be change to 0 or 1 thruough options config file (default is 1).
  - Review xrandr auto config section to add offline displays at session manager start when nvidia option is set.
  - Add a report.sample in markdown to fill in issue reports.
- 
  
 *( 2018/04/22 ) v0.9.10*
  - Nvidia-prime-select was untested on multi display. It appeared that actual xrandr detection and sets failed, also display.prime was needed more delay before lauching because of xramdr monitors.xml file sets conflict.

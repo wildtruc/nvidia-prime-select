@@ -21,7 +21,7 @@ install:
 	install -Dm644 -t /usr/share/applications/ nvidia-prime-ui.desktop
 	install -Dm644 -t /usr/share/polkit-1/actions/ com.github.pkexec.nvidia-prime-select.policy
 	install -Dm644 -t /usr/share/polkit-1/actions/ com.github.pkexec.nvidia-prime-editor.policy
-	sh ./changelog.sh
+	bash ./changelog.sh
 
 update:
 #	sh ./changelog.sh
@@ -37,7 +37,7 @@ update:
 	install -Dm644 -t /usr/share/applications/ nvidia-prime-ui.desktop
 	install -C -Dm644 -t /usr/share/polkit-1/actions/ com.github.pkexec.nvidia-prime-select.policy
 	install -C -Dm644 -t /usr/share/polkit-1/actions/ com.github.pkexec.nvidia-prime-editor.policy
-	sh ./changelog.sh
+	bash ./changelog.sh
 
 uninstall:
 	rm -rf $(INSTALL_DIR)
