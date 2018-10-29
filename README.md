@@ -95,6 +95,9 @@ When done, launch the commandline as admin/superuser or with nvidia-prime-ui as 
 
 The script will setup your actual *xrandr* configuration automatically.
 
+## Dependencies
+ - zenity (updates messages and UI display)
+
 ## Notes
 *Option "DPI" "96 x 96"* is set by default in the *xorg.nvidia.conf* because *xrandr* set it at *75* by default. If you have a weaker **Nvidia®** GPU, it's maybe a good thing to let it at *75* if you want to play some games smoother.
 

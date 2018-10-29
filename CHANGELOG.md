@@ -1,4 +1,7 @@
 ### Change Log
+*( 2018/10/29 ) v0.9.13*
+ - fix changelog.sh to display changelog message regardless zenity dependency installed.
+
 *( 2018/06/27 ) v0.9.12*
  - Makefile: changed 'sh' to 'bash' prefix in command line on user clever comment.
  
