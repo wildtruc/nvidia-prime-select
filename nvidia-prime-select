@@ -21,7 +21,7 @@
 
 ## this script have to be launch with user's session started.
 
-set -e
+#set -e
 # check if root and exit if not
 if [[ $EUID -ne 0 ]]; then
   printf 'Script must be executed as root or sudo :\n'
@@ -45,7 +45,7 @@ if [[ -s $install_dir/library.conf ]]; then
 		. $install_dir/library.conf
 	fi
 fi
-## default options (have to be manual set/reset in options.conf of by nvidia-prime-ui)
+## default options (have to be manual set/reset in options.conf of nvidia-prime-ui)
 delay=5
 intel_nodelay=1
 cfg_grub=1
@@ -62,11 +62,18 @@ connected_display=( "$(xrandr --current| grep -w "connected"| sed -En "s|^(.*)\ 
 ## grub section have to be filtered in case of distros specifics.
 grub_config(){
 	if [ $cfg_grub -gt 0 ]; then
+		## define if grub is EFI or not
+#		lsb_name=$(lsb_release --id --short| sed -E "s/(.*)/\L\1/")
+		grub_cfg=$(find /boot -wholename "*/grub.cfg")
 		## look at /proc/version to detect distro variant.
 		boot_key='/boot/vmlinuz-'$(uname -r)
-		modeset_check=$(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=.*$")
-		if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=$nv_modeset.*$") -eq 0 ]; then
-			if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*blacklist=nouveau.*$") -eq 0 ]; then
+#		modeset_check=$(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=.*$")
+#		if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=$nv_modeset.*$") -eq 0 ]; then
+#			if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*blacklist=nouveau.*$") -eq 0 ]; then
+		modeset_check=$(cat $grub_cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=.*$")
+
+		if [ $(cat $grub_cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=$nv_modeset.*$") -eq 0 ]; then
+			if [ $(cat $grub_cfg| egrep -c "^.*$boot_key.*blacklist=nouveau.*$") -eq 0 ]; then
 				blacklist=' nouveau.modeset=0 rd.driver.blacklist=nouveau'
 			fi
 			if [ $cfg_modeset -gt 0 ]; then					
@@ -74,7 +81,7 @@ grub_config(){
 			else
 				modset=$blacklist
 			fi
-			## add nouveau blacklist to modeproe.d configs list.
+			## add nouveau blacklist to modeprobe.d configs list.
 			if ! [[ -s /etc/modprobe.d/blacklist-nouveau.conf ]]; then
 				echo "blacklist nouveau" > /etc/modprobe.d/blacklist-nouveau.conf
 			fi
@@ -145,35 +152,54 @@ xrandr_outputs(){
 				## don't set display as primary at this step. this here basic xrandr display setting.
 				## user have to set default primary at user session in case of multiple screen.
 				enable_output='--output '$connected_output' --mode '$def_horiz'x'$def_verti' --pos '$def_pos$prim
+#				rescue_mode=' --mode '$def_horiz'x'$def_verti' --pos '$def_pos$prim
 				_outputs+=($enable_output)
+				if [ $prim != '' ]; then prim_display=$connected_output; fi
 			fi
 		else
 			disable_output=' --output '$connected_output' --off'
 			_outputs+=($disable_output)
 			_disabled+=($disable_output)
+			if [ $(echo -e "$connected_output"| grep -c "VGA") -gt 0 ]; then
+				_rescue+=($disable_output)
+			fi
 		fi
 	done
 	if [[ $conf == nvidia ]]; then
-		if [ $(echo -e "${_outputs[*]}"| grep -c "VGA") -eq 0 ]; then
+		if [ $(echo -e "${_outputs[@]}"| grep -c "VGA") -eq 0 ]; then
 			disable_output='--output VGA-0 --off'
 			_outputs+=($disable_output)
 			_disabled+=($disable_output)
+			
 		fi
 	fi
 	IFS=$ifs
 	xrandr_config="xrandr${_outputs[*]}"
+	
+	
 	if [[ $conf == nvidia ]]; then
 		xrandr_source='NVIDIA-0'
 		xrandr_sink='modesetting'
 	fi
 	if [[ $conf == nvidia ]]; then
 #		xrandr_init="xrandr --setprovideroutputsource $xrandr_sink $xrandr_source --auto --output VGA-0 --off"
-		xrandr_init="xrandr --setprovideroutputsource $xrandr_sink $xrandr_source --auto ${_disabled[*]}"
+#		xrandr_init="xrandr --setprovideroutputsource $xrandr_sink $xrandr_source --auto ${_disabled[*]}"
+		xrandr_init_src="xrandr --setprovideroutputsource $xrandr_sink $xrandr_source"
+		xrandr_init_dsp="xrandr --auto ${_disabled[*]}"
+		bash_start='if [ $(xrandr --current| egrep -c "'$prim_display' connected") -gt 0 ]; then'
+		bash_end='else\nxrandr --auto '${_rescue[@]}'\nfi\n'
+		echo -e "#! /bin/bash\n\n#sleep $delay\n$xrandr_init_src\n$bash_start\n$xrandr_init_dsp\n$bash_end" > $install_dir/xinitrc.prime
+		echo -e "#! /bin/bash\n\nsleep $delay\n$bash_start\n$xrandr_config\n$bash_end" > $install_dir/display.prime
 	else
-		xrandr_init=''
+#		xrandr_init_src=''; xrandr_init_dsp=''; bash_start=''; bash_end=''
+		echo -e "" > $install_dir/xinitrc.prime
+		echo -e "" > $install_dir/display.prime
 	fi
-	echo -e "#! /bin/bash\n\n#sleep $delay\n$xrandr_init" > $install_dir/xinitrc.prime
-	echo -e "#! /bin/bash\n\nsleep $delay\n$xrandr_config\n" > $install_dir/display.prime
+	## TODO monitor monitors.xml file if exist, then edit and parse.
+	## TEST offload system for render on nvidia.
+	
+#	echo -e "#! /bin/bash\n\n#sleep $delay\n$xrandr_init_src\n$bash_start\n$xrandr_init_dsp\n$bash_end" > $install_dir/xinitrc.prime
+#	echo -e "#! /bin/bash\n\nsleep $delay\n$bash_start\n$xrandr_config\n$bash_end" > $install_dir/display.prime
 	if [ $(stat -c %a $install_dir/display.prime) -ne 755 ]; then
 		chmod 755 $install_dir/display.prime
 	fi
