@@ -154,7 +154,7 @@ xrandr_outputs(){
 				enable_output='--output '$connected_output' --mode '$def_horiz'x'$def_verti' --pos '$def_pos$prim
 #				rescue_mode=' --mode '$def_horiz'x'$def_verti' --pos '$def_pos$prim
 				_outputs+=($enable_output)
-				if [ $prim != '' ]; then prim_display=$connected_output; fi
+				if [[ $prim != '' ]]; then prim_display=$connected_output; fi
 			fi
 		else
 			disable_output=' --output '$connected_output' --off'

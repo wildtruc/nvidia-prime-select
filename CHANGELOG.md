@@ -1,4 +1,7 @@
 ### Change Log
+*( 2019/03/6 ) v0.9.15*
+ - fixed bad bracket in conditioal form (line 157).
+
 *( 2019/03/4 ) v0.9.14*
  - info: My laptop is too old now and it's no more support by nvidia drivers. I can't no longer test on it.
  - message: I've severe health issues and don't know if I'll can still continue to maintain my projects. Fork is strongly recommand.
