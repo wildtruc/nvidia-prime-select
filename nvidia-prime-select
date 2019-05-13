@@ -67,9 +67,7 @@ grub_config(){
 		grub_cfg=$(find /boot -wholename "*/grub.cfg")
 		## look at /proc/version to detect distro variant.
 		boot_key='/boot/vmlinuz-'$(uname -r)
-#		modeset_check=$(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=.*$")
-#		if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=$nv_modeset.*$") -eq 0 ]; then
-#			if [ $(cat /boot/grub2/grub.cfg| egrep -c "^.*$boot_key.*blacklist=nouveau.*$") -eq 0 ]; then
+
 		modeset_check=$(cat $grub_cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=.*$")
 
 		if [ $(cat $grub_cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=$nv_modeset.*$") -eq 0 ]; then
@@ -86,9 +84,9 @@ grub_config(){
 				echo "blacklist nouveau" > /etc/modprobe.d/blacklist-nouveau.conf
 			fi
 			if [ $modeset_check -gt 0 ]; then
-				sed -Eni -e "s|(linux.*$boot_key.*ro) (nvidia-drm.modeset=[0-9])(.*)$|\1 $modset\3|g;p" /boot/grub2/grub.cfg
+				sed -Eni -e "s|(linux.*$boot_key.*ro) (nvidia-drm.modeset=[0-9])(.*)$|\1 $modset\3|g;p" $grub_cfg
 			else
-				sed -Eni -e "s|(linux.*$boot_key.*ro)(.*)$|\1 $modset \2|g;p" /boot/grub2/grub.cfg
+				sed -Eni -e "s|(linux.*$boot_key.*ro)(.*)$|\1 $modset \2|g;p" $grub_cfg
 			fi
 			reboot_text='Grub has been modified for Nvidia Prime modesetting.\nPLease reboot the system for changes to take effect.'
 		fi
