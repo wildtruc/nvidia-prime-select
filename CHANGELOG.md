@@ -1,4 +1,7 @@
 ### Change Log
+*( 2019/07/28 ) v0.9.16*
+ - Efi grub mkconfig test, please report.
+ 
 *( 2019/03/6 ) v0.9.15*
  - fixed bad bracket in conditioal form (line 157).
 
