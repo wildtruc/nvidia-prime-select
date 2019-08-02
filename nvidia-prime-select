@@ -101,7 +101,8 @@ grub_config(){
 }
 bus_id_query(){
 	## detect and config pci ids.
-	bus_vga_list=$(lspci | grep VGA| awk '{print $1" "$5}'| sed -En "s|^.([0-9])\:.([0-9])\.([0-9])\ (.*)$|bus_\L\4=\1:\2:\3|p")
+#	bus_vga_list=$(lspci | grep VGA| awk '{print $1" "$5}'| sed -En "s|^.([0-9])\:.([0-9])\.([0-9])\ (.*)$|bus_\L\4=\1:\2:\3|p")
+	bus_vga_list=$(lspci | egrep "VGA|3D controller"| awk '{print $1" "$5}'| sed -En "s|^.([0-9])\:.([0-9])\.([0-9])\ (.*)$|bus_\L\4=\1:\2:\3|p")
 	export $bus_vga_list
 }
 clean_files() {
