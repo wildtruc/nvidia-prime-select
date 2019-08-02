@@ -1,4 +1,8 @@
 ### Change Log
+*( 2019/08/02 ) v0.9.17*
+ - As reported, new nvidia discret card bus ID has changed. Script wasn't prevent those kind of changes. This is hopefuly fixed.
+ - Modified code is a bit ugly, please report on any issue.
+
 *( 2019/07/28 ) v0.9.16*
  - Efi grub mkconfig test, please report.
  

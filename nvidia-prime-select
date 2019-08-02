@@ -312,17 +312,23 @@ abi_crtl(){
 	fi
 }
 display_config(){
+	xorg_file=$install_dir/xorg.$ctrl_key.conf
 	if [[ $current_display ]]; then
 		xrandr_outputs
 		session_manager
 	fi
 	for vga_id in "nvidia" "intel"; do
-		if [ $(cat $install_dir/xorg.$ctrl_key.conf|grep -oc "bus_$vga_id") -gt 0 ]; then
-			eval bus_id='$'bus_$vga_id
-			sed -ni -e "s|bus_$vga_id|$bus_id|g;p" $install_dir/xorg.$ctrl_key.conf
+		eval bus_id='$'bus_$vga_id
+		if [ $(cat $xorg_file|grep -oc "bus_$vga_id") -gt 0 ]; then
+			sed -ni -e "s|bus_$vga_id|$bus_id|g;p" $xorg_file
+		else
+			if [ $(cat $xorg_file| sed -n "/## $vga_id xorg/,/PCI/p"| grep -c "$bus_id") -eq 0 ]; then
+				line_up=$(sed -En "/## $vga_id xorg/,/PCI/{;/BusID/p}" $xorg_file)
+				sed -Eni "s/$line_up/\tBusID\t\t\"PCI:$bus_id\"/g;p" $xorg_file
+			fi
 		fi
 	done
-	ln -sf $install_dir/xorg.$ctrl_key.conf /etc/X11/xorg.conf
+	ln -sf $xorg_file /etc/X11/xorg.conf
 }
 go_for_nvidia(){
 	clean_files
