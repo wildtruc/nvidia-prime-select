@@ -1,4 +1,8 @@
 ### Change Log
+*( 2019/08/03 ) v0.9.18*
+ - Due to lspci graphic controller name as "3D controller", after a few tests, regex to get bus id list was wrong. Modified for a more appropriate.
+ - please, test and report.  
+ 
 *( 2019/08/02 ) v0.9.17*
  - As reported, new nvidia discret card bus ID has changed. Script wasn't prevent those kind of changes. This is hopefuly fixed.
  - Modified code is a bit ugly, please report on any issue.
