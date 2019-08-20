@@ -1,4 +1,14 @@
 ### Change Log
+*( 2019/08/20 ) v0.9.19*
+ - grub configuration tool updated, finally.
+ - many mistakes discovered and fixed. Including on previous update. (dev brain is not so well :s)
+ - check and test on my old laptop 610M with update 390.xx driver series, 390.129.
+ - HOW-TO : perform a new 'make install' if necessary.
+ - Save your libconfig file and custom xorg file if any.
+ - Exec 'nvidia-prime-select nvidia' by cmdline or GUI, reboot.
+ - if the creepy VGA-0 ghost display come back, don't forget to disable it with xrandr GUI and then restart your session.
+ - don't forget to report in github issues section if anything goes wrong.
+ 
 *( 2019/08/03 ) v0.9.18*
  - Due to lspci graphic controller name as "3D controller", after a few tests, regex to get bus id list was wrong. Modified for a more appropriate.
  - please, test and report.  

@@ -40,6 +40,7 @@ nv_xorg_path='/usr/lib64/nvidia/xorg'
 ## check any custom dirs for nvidia librairies linking
 if [[ -s $install_dir/library.conf ]]; then
 	## TODO Here special distro library config could take place.
+	## no clue without contribs.
 	## test library conf content before loading.
 	if [ $(cat $install_dir/library.conf| sed -En "s/^(.*)='(.*)'$/\2/g;p"| grep -c .) -gt 0 ]; then
 		. $install_dir/library.conf
@@ -58,50 +59,39 @@ fi
 current_display=$(xrandr --current| grep "connected"| grep "[0-9]\{3,4\}[x]"| sed -n "s/\ (.*$//p")
 connected_display=( "$(xrandr --current| grep -w "connected"| sed -En "s|^(.*)\ (\(.*)$|\1|p")" )
 
-## FIXME ?
-## grub section have to be filtered in case of distros specifics.
 grub_config(){
+## Since fedora 30, grub config has changed and regex is no longer adapted to new version that only
+## write a 'set_default' for all kernel version options. This need to be control and for other distros aswell.
 	if [ $cfg_grub -gt 0 ]; then
-#	if [[ $cfg_grub -gt 0 || ! -d /sys/firmware/efi/ ]]; then
-		## define if grub is EFI or not
-#		lsb_name=$(lsb_release --id --short| sed -E "s/(.*)/\L\1/")
 		grub_cfg=$(find /boot -wholename "*/grub.cfg")
-		## look at /proc/version to detect distro variant.
-		boot_key='/boot/vmlinuz-'$(uname -r)
-
-		modeset_check=$(cat $grub_cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=.*$")
-
-		if [ $(cat $grub_cfg| egrep -c "^.*$boot_key.*nvidia-drm.modeset=$nv_modeset.*$") -eq 0 ]; then
-			if [ $(cat $grub_cfg| egrep -c "^.*$boot_key.*blacklist=nouveau.*$") -eq 0 ]; then
-				blacklist=' nouveau.modeset=0 rd.driver.blacklist=nouveau'
-			fi
-			if [ $cfg_modeset -gt 0 ]; then					
-				modset='nvidia-drm.modeset='$nv_modeset$blacklist
+		grub_def=/etc/default/grub
+		grub_key='GRUB_CMDLINE_LINUX'
+		blacklist='nouveau.modeset=0 rd.driver.blacklist=nouveau'
+		nv_set=$(cat $grub_def| egrep -c "^$grub_key.*blacklist=nouveau.*$")
+		drm_set=$(cat $grub_def| egrep -c "^$grub_key.*nvidia-drm.modeset.*$")
+		if [ $cfg_modeset -gt 0 ]; then
+			if [ $nv_set -gt 0 ]; then
+				modset='nvidia-drm.modeset=0'
 			else
-				modset=$blacklist
+				modset='nvidia-drm.modeset=0 '$blacklist
 			fi
+		else
+			modset=$blacklist
+		fi
+		if [ $nv_set -eq 0 ]||[[ $cfg_modeset -gt 0 && $drm_set -eq 0 ]]; then
 			## add nouveau blacklist to modeprobe.d configs list.
 			if ! [[ -s /etc/modprobe.d/blacklist-nouveau.conf ]]; then
 				echo "blacklist nouveau" > /etc/modprobe.d/blacklist-nouveau.conf
 			fi
-			if [ $modeset_check -gt 0 ]; then
-				sed -Eni -e "s|(linux.*$boot_key.*ro) (nvidia-drm.modeset=[0-9])(.*)$|\1 $modset\3|g;p" $grub_cfg
-			else
-				sed -Eni -e "s|(linux.*$boot_key.*ro)(.*)$|\1 $modset \2|g;p" $grub_cfg
-			fi
-			## control EFI boot manager presence, then update grub.cfg with grub2-mkconfig
-			if [[ -d /sys/firmware/efi/ ]]; then
-				grub2-mkconfig -o $grub_cfg
-				## Is it necessary to update firmware ? TODO ?
-				## Well, ok. But how ?
-			fi
+			sed -Eni "s|^($grub_key)=\"(.*)\"$|\1=\"$modset \2\"|g;p" $grub_def
+			grub2-mkconfig -o $grub_cfg
 			reboot_text='Grub has been modified for Nvidia Prime modesetting.\nPLease reboot the system for changes to take effect.'
 		fi
 	fi
 }
 bus_id_query(){
 	## detect and config pci ids.
-	bus_vga_list=$(lspci | egrep "VGA|3D controller"| sed -En "s/^(.*\.[0-9]) .*: ?([[:alnum:]]*) .*$/\1 \2/;s/^.([0-9])\:.([0-9])\.([0-9])\ (.*)$/bus_\L\4=\1:\2:\3/p")
+	bus_vga_list=$(lspci | egrep "\ (VGA|3D)\ "| awk '{print $1" "$5}'| sed -En "s|^.([0-9])\:.([0-9])\.([0-9])\ (.*)$|bus_\L\4=\1:\2:\3|p")
 	export $bus_vga_list
 }
 clean_files() {
@@ -304,7 +294,7 @@ session_manager(){
 }
 abi_crtl(){
 ## enable xorg ABI23 behaviour to fix vsync and render. 
-	if [[ $abi_ver && $abi_ver == 23 ]]; then
+	if [[ $abi_ver && $abi_ver -ge 23 ]]; then
 		if [ $(cat $install_dir/xorg.$ctrl_key.conf| grep -c "IgnoreABI" ) -eq 0 ]; then
 			server_flag="Section \"ServerFlags\"\n\tOption\t\"IgnoreABI\" \"1\"\nEndSection"
 			sed -Eni -e "s|^(## ABI config)$|\1\n$server_flag|g;p" $install_dir/xorg.$ctrl_key.conf
