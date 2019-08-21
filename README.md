@@ -13,6 +13,9 @@ Thus, I discided to go deeper to solve that particular issue and a few others as
 
 --------------
 # Update message
+### 2019-08-20
+There were many issues with grub config reported. It is hopefully fix and updated now. Please don't forget to report even if you think it's too minor and pointless.
+
 ### 2018-04-01
 Dev test was running on Fedora 24, since upgraded to Fedora 27 it appears that xrandr on modesettings is broken and dosn't work anymore for discret nvidia.
 
