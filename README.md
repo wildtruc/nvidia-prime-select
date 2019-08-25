@@ -1,6 +1,12 @@
 # nvidia-prime-select
 This is a fork of **[FedoraPrime](https://github.com/bosim/FedoraPrime)** enhanced for all linux distributions.
 
+------------
+## Offlaod Technologie Testing preview
+Please read [Offload](Offload.md) file for more dtails.
+
+------------
+
 # Introduction
 Seeking for a tools to swicht entirely from default **Intel®** GPU to the discret **Nvidia®** graphic card, I discover **[FedoraPrime](https://github.com/bosim/FedoraPrime)**.
 
