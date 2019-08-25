@@ -94,26 +94,39 @@ L'Offload permet pour le moment l'utilisation de GLX OpenGL et de vulkan. EGL n'
 Si tout s'est bien passé, votre serveur X a démarré et votre session manager à ouvert votre interface favorite.
 
 La première choses à faire depuis votre interface à partir d'un terminal est d'entrer la ligne de commande 'xrandr' suivante :
+
 ```xrandr --listproviders```
 
 Si la version testing de xorg est patchée le terminal devrait retourner une list avec le fournisseur "NVIDIA-G0". dans ce cas vous pouvez procéder à l'étape suivante.
 
+
 ### Controler le fournisseur OpenGL / vulkan :
+
 ```__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia glxinfo | grep vendor```
+
 Ceci doit retourner le vendeur NVIDIA.
 
 ### Test de Vulkan :
+
 la librairie GLVND doit être active pour le pilote NVIDIA et le librairie VULKAN correctement installées.
+
 ```__NV_PRIME_RENDER_OFFLOAD=1 vkcube```
+
 ou :
+
 ```__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only vkcube```
+
 ou bien, pour tester que l'Intel intégrée fonctionne tout aussi correctement :
+
 ```__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=non_NVIDIA_only vkcube```
 
 
 ### Test GLX/OpenGL :
+
 ```__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia glxgears```
+
 Vous pouvez définir plus finement la commande en ajoutant le nom du vendeur obtenu avec ```xrandr```.
+
 ```__NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0 __GLX_VENDOR_LIBRARY_NAME=nvidia glxgears```
 
 # Test direct sur application et variable d'environnement.

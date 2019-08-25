@@ -92,26 +92,36 @@ Offload currently allows the use of GLX OpenGL and Vulkan. EGL is not yet suppor
 If everything went well, your X server started and your manager session opened your favorite interface.
 
 The first thing to do from your interface from a terminal is to enter the following'xrandr' command line:
-"xrandr --listproviders""xrandr --listproviders
+
+```xrandr --listproviders```
 
 If the xorg testing version is patched the terminal should return a list with the supplier "NVIDIA-G0". In this case you can proceed to the next step.
 
+
 ### Control the OpenGL / vulkan provider
 ```__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia glxinfo | grep vendor```
+
 This must return the NVIDIA vendor.
 
 ### Vulkan 3D test
 The GLVND library must be active for the NVIDIA driver and the VULKAN library correctly installed.
+
 ```__NV_PRIME_RENDER_OFFLOAD=1 vkcube```
+
 or :
+
 ```__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only vkcube```
+
 or  test the correct integrated intel gpu behavoiur :
+
 ```__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=non_NVIDIA_only vkcube```
 
 
 ### Test GLX/OpenGL :
 ```__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia glxgears```
+
 You can define the order more precisely by adding the name of the seller obtained with ``xrandr```.
+
 ```__NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0 __GLX_VENDOR_LIBRARY_NAME=nvidia glxgears```
 
 
