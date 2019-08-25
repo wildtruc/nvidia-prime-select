@@ -120,7 +120,7 @@ or  test the correct integrated intel gpu behavoiur :
 ### Test GLX/OpenGL :
 ```__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia glxgears```
 
-You can define the order more precisely by adding the name of the seller obtained with ``xrandr```.
+You can define the order more precisely by adding the name of the seller obtained with ```xrandr```.
 
 ```__NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0 __GLX_VENDOR_LIBRARY_NAME=nvidia glxgears```
 
