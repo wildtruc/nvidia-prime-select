@@ -1,5 +1,5 @@
 # Introduction
-Depuis la version 415, les pilotes nvidia proposent la prise en charge de Prime par la technologie Offload. C'est un technologie de test qui ne fonctionne qu'avec une version patchée de Xorg. Cependant et après quelques exercices sur une machine test, il apparaît que la configuration de xorg pour la prise en charge de cette technique fonctionne sans soucis particulier même si elle n'offre pas l'Offload par le GPU Nvidia.
+Depuis la version beta 435.17, les pilotes nvidia proposent la prise en charge de Prime par la technologie Offload. C'est un technologie de test qui ne fonctionne qu'avec une version patchée de Xorg. Cependant et après quelques exercices sur une machine test, il apparaît que la configuration de xorg pour la prise en charge de cette technique fonctionne sans soucis particulier même si elle n'offre pas l'Offload par le GPU Nvidia.
 
 La machine test est ancienne et ne fonctionne qu'avec le pilote 390.129 dernièrement mis à jour et est donc incapable de prendre en charge l'Offload de la manière souhaitée.
 
