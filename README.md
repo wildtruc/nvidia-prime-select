@@ -3,7 +3,7 @@ This is a fork of **[FedoraPrime](https://github.com/bosim/FedoraPrime)** enhanc
 
 ------------
 ## Offlaod Technologie Testing preview
-Please read [Offload](Offload.md) file for more dtails.
+Please read [Offload](OFFLOAD.md) file for more details.
 
 ------------
 
