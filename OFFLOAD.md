@@ -140,5 +140,8 @@ If this solution is suitable for you, the donation of 1€ to 5€ per motivated
 
 I have no particular idea for the choice of an optimus laptop that will have to be able to stand the test over a long period of time, you can suggest one in the subject opened for this purpose in the tab "issues".
 
+## IMPORTANT NOTE
+This tech will shortly become the default nvidia's drivers behaviour, so stay tuned and think to contribute (code, tests, discussions) if you're thinking that donation for new hardware doesn't really matter.
+
 (Translation enhanced with the help of www.DeepL.com/Translator)
 

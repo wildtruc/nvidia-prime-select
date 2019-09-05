@@ -1,4 +1,12 @@
 ### Change Log
+*( 2019/09/05 ) v0.9.20*
+ - add more filter to current config used and readapted xorg config editor for customized xorg.conf.
+ - reviewed xrandr config system and fixed it to be lighter.
+ - options in xorg file are useless and removed by default because with modesetting they are not reconize by the driver.
+ - introducing first modifications for next 'offload' setting. Read inside the script at 'go_offload' function if you want to help.
+ - default options conf file nvidia-drm set is by default set to 'none' (looks useless in most cases).
+ - WARNING: Do a 'sudo make install' this time and don't forget to make a backup of /etc/nvidia-prime.
+ 
 *( 2019/08/20 ) v0.9.19*
  - grub configuration tool updated, finally.
  - many mistakes discovered and fixed. Including on previous update. (dev brain is not so well :s)

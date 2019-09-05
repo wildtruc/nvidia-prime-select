@@ -19,9 +19,8 @@
 ## You can redistribute it as you wish : GPL v3
 ## author : wildtruc@noneltd.net
 
-## this script have to be launch with user's session started.
+## this script have to be launch with user's session started except for rescue 'default' option command.
 
-#set -e
 # check if root and exit if not
 if [[ $EUID -ne 0 ]]; then
   printf 'Script must be executed as root or sudo :\n'
@@ -67,10 +66,13 @@ grub_config(){
 		grub_def=/etc/default/grub
 		grub_key='GRUB_CMDLINE_LINUX'
 		blacklist='nouveau.modeset=0 rd.driver.blacklist=nouveau'
-		nv_set=$(cat $grub_def| egrep -c "^$grub_key.*blacklist=nouveau.*$")
+		nov_set=$(cat $grub_def| egrep -c "^$grub_key.*blacklist=nouveau.*$")
 		drm_set=$(cat $grub_def| egrep -c "^$grub_key.*nvidia-drm.modeset.*$")
+		## if 'nvidia-drm.modeset' is define in options conf, do
 		if [ $cfg_modeset -gt 0 ]; then
-			if [ $nv_set -gt 0 ]; then
+			## if 'blacklist=nouveau' if already defined in grub defautl conf, just add drm set.
+			## esle insert the whole pattern.
+			if [ $nov_set -gt 0 ]; then
 				modset='nvidia-drm.modeset=0'
 			else
 				modset='nvidia-drm.modeset=0 '$blacklist
@@ -78,14 +80,18 @@ grub_config(){
 		else
 			modset=$blacklist
 		fi
-		if [ $nv_set -eq 0 ]||[[ $cfg_modeset -gt 0 && $drm_set -eq 0 ]]; then
-			## add nouveau blacklist to modeprobe.d configs list.
-			if ! [[ -s /etc/modprobe.d/blacklist-nouveau.conf ]]; then
-				echo "blacklist nouveau" > /etc/modprobe.d/blacklist-nouveau.conf
+		## define if grub s already setted. Then, act as appropriate. 
+		cfg_prev=$(cat $grub_def| egrep -c "^$grub_key.*$modeset.*$")
+		if [ $cfg_prev -eq 0 ]; then
+			if [ $nov_set -eq 0 ]||[[ $cfg_modeset -gt 0 && $drm_set -eq 0 ]]; then
+				## add nouveau blacklist to modeprobe.d configs list.
+				if ! [[ -s /etc/modprobe.d/blacklist-nouveau.conf ]]; then
+					echo "blacklist nouveau" > /etc/modprobe.d/blacklist-nouveau.conf
+				fi
+				sed -Eni "s|^($grub_key)=\"(.*)\"$|\1=\"$modset \2\"|g;p" $grub_def
+				grub2-mkconfig -o $grub_cfg
+				reboot_text='Grub has been modified for Nvidia Prime modesetting.\nPLease reboot the system for changes to take effect.'
 			fi
-			sed -Eni "s|^($grub_key)=\"(.*)\"$|\1=\"$modset \2\"|g;p" $grub_def
-			grub2-mkconfig -o $grub_cfg
-			reboot_text='Grub has been modified for Nvidia Prime modesetting.\nPLease reboot the system for changes to take effect.'
 		fi
 	fi
 }
@@ -110,91 +116,72 @@ clean_files() {
 	done
 }
 xrandr_outputs(){
-	## xrandr have to be set as user wishes to give to script proper xrandr sets.
-	## This is mandatory.
-#	conf=nvidia
 	ifs=$IFS
 	IFS=$(echo -en "\n\b")
-	for _dsp in ${connected_display[@]}; do
-		echo "$_dsp"
-		output_class=$(printf "$_dsp"|awk '{print $1}'| sed -En "s|^(\w*[A-Z])[-]?(.*)$|\1|p")
-		output_num=$(printf "$_dsp"|awk '{print $1}'| sed -En "s|^(\w*[A-Z])[-]?(.*)$|\2|p")
-		dash_cnt=$( dash=${_dsp//[^-]}; printf "${#dash}"; )
-		if [[ $conf == nvidia ]]; then
-			if [ $dash_cnt -eq 0 ]; then
-				output_num=$output_num'-'$output_num
-			fi
+	## intel settings only need empty xinitrc and display file. Then, only nvidia is managed.
+	if [ $ctrl_key -gt 0 ]; then
+		for _dsp in ${connected_display[@]}; do
+			echo "$_dsp"
+			output_class=$(printf "$_dsp"|awk '{print $1}'| sed -En "s|^(\w*[A-Z])[-]?(.*)$|\1|p")
+			output_num=$(printf "$_dsp"|awk '{print $1}'| sed -En "s|^(\w*[A-Z])[-]?(.*)$|\2|p")
+## XXX this part seems useless. Should be removed in near future if no issue reported.
+#			dash_cnt=$( dash=${_dsp//[^-]}; printf "${#dash}"; )
+#			## nvidia xrandr monitor set is : monitor-x-x, intel is : monitor-x
+#			## counting number of dash detect the provider to config.
+#			if [ $dash_cnt -eq 1 ]; then
+#				output_num=$output_num'-'$output_num
+#			fi
 			connected_output=$output_class'-'$output_num
-		else
-			if [[ $_dsp =~ ^.*-.*$ ]]; then output_num=$(printf "$output_num"| cut -d'-' -f1); fi
-			if [[ $output_class == VGA ]]; then output_num=1; fi
-			connected_output=$output_class$output_num
-		fi
-		if [ $(xrandr --current| grep "$_dsp"| egrep -oc "[0-9]{3,4}[x]") -gt 0 ]; then
-			if [[ $_dsp =~ ^VGA* ]]; then
-				current_output=$(xrandr --current| grep "$_dsp"| sed -En "s|^(.*)\ (\(.*)$|\1|p")
-			else
-				current_output=$(xrandr --current| grep "$_dsp"| sed -En "s|^(.*[0-9]{3,4}[x].*)\ (\(.*)$|\1|p")
+#			connected_output=$output_class'-'$output_num'-'$output_num
+			if [ $(xrandr --current| grep "$_dsp"| egrep -oc "[0-9]{3,4}[x]") -gt 0 ]; then
+				if [[ $_dsp =~ ^VGA* ]]; then
+					current_output=$(xrandr --current| grep "$_dsp"| sed -En "s|^(.*)\ (\(.*)$|\1|p")
+				else
+					current_output=$(xrandr --current| grep "$_dsp"| sed -En "s|^(.*[0-9]{3,4}[x].*)\ (\(.*)$|\1|p")
+				fi
+				check_primary_set=( $(echo -e $current_output| tr ' ' '\n') )
+				## command line results is ususally made of 3 word if not primary (4 otherwise)
+				if [ ${#check_primary_set[@]} -gt 3 ]; then rank=4; prim=' --primary'; else rank=3; prim=''; fi
+				if ! [[ $connected_output =~ ^VGA ]]; then
+					def_res=$(printf "$current_output"| cut -d' ' -f$rank)
+					def_horiz=$(printf "$def_res"| sed -En "s|^(.*)x(.*)\+.*\+.*$|\1|p")
+					def_verti=$(printf "$def_res"| sed -En "s|^(.*)x(.*)\+.*\+.*$|\2|p")
+					def_pos=$(printf "$def_res"| sed -En "s|^.*x.*\+(.*\+.*)$|\1|;s|\+|x|p")
+					## don't set display as primary at this step. this here basic xrandr display setting.
+					## user have to set default primary at user session in case of multiple screen.
+					enable_output='--output '$connected_output' --mode '$def_horiz'x'$def_verti' --pos '$def_pos$prim
+					_outputs+=($enable_output)
+					if [[ $prim != '' ]]; then prim_display=$connected_output; fi
+				fi
 			fi
-			check_primary_set=( $(echo -e $current_output| tr ' ' '\n') )
-			
-			if [ ${#check_primary_set[@]} -gt 3 ]; then rank=4; prim=' --primary'; else rank=3; prim=''; fi
-			if ! [[ $connected_output =~ ^VGA ]]; then
-				def_res=$(printf "$current_output"| cut -d' ' -f$rank)
-				def_horiz=$(printf "$def_res"| sed -En "s|^(.*)x(.*)\+.*\+.*$|\1|p")
-				def_verti=$(printf "$def_res"| sed -En "s|^(.*)x(.*)\+.*\+.*$|\2|p")
-				def_pos=$(printf "$def_res"| sed -En "s|^.*x.*\+(.*\+.*)$|\1|;s|\+|x|p")
-				## don't set display as primary at this step. this here basic xrandr display setting.
-				## user have to set default primary at user session in case of multiple screen.
-				enable_output='--output '$connected_output' --mode '$def_horiz'x'$def_verti' --pos '$def_pos$prim
-#				rescue_mode=' --mode '$def_horiz'x'$def_verti' --pos '$def_pos$prim
-				_outputs+=($enable_output)
-				if [[ $prim != '' ]]; then prim_display=$connected_output; fi
-			fi
-		else
-			disable_output=' --output '$connected_output' --off'
-			_outputs+=($disable_output)
-			_disabled+=($disable_output)
-			if [ $(echo -e "$connected_output"| grep -c "VGA") -gt 0 ]; then
-				_rescue+=($disable_output)
+		done
+		if [ $(xrandr --current| egrep -c "VGA.*[ ]connected") -gt 0 ]; then
+			if [ $(echo -e "${_outputs[@]}"| grep -c "VGA") -eq 0 ]; then
+				disable_output='--output VGA-0 --off'
+				_outputs+=($disable_output)
+				_disabled+=($disable_output)
 			fi
 		fi
-	done
-	if [[ $conf == nvidia ]]; then
-		if [ $(echo -e "${_outputs[@]}"| grep -c "VGA") -eq 0 ]; then
-			disable_output='--output VGA-0 --off'
-			_outputs+=($disable_output)
-			_disabled+=($disable_output)
-			
-		fi
-	fi
-	IFS=$ifs
-	xrandr_config="xrandr${_outputs[*]}"
-	
-	
-	if [[ $conf == nvidia ]]; then
+		IFS=$ifs
+		xrandr_config="xrandr ${_outputs[*]}"
 		xrandr_source='NVIDIA-0'
 		xrandr_sink='modesetting'
-	fi
-	if [[ $conf == nvidia ]]; then
-#		xrandr_init="xrandr --setprovideroutputsource $xrandr_sink $xrandr_source --auto --output VGA-0 --off"
-#		xrandr_init="xrandr --setprovideroutputsource $xrandr_sink $xrandr_source --auto ${_disabled[*]}"
 		xrandr_init_src="xrandr --setprovideroutputsource $xrandr_sink $xrandr_source"
-		xrandr_init_dsp="xrandr --auto ${_disabled[*]}"
+#		xrandr_init_dsp="xrandr --auto ${_disabled[*]}"
+		xrandr_init_dsp="xrandr --auto"
+		## script to parse in xinitrc.prime and display.prime
 		bash_start='if [ $(xrandr --current| egrep -c "'$prim_display' connected") -gt 0 ]; then'
-		bash_end='else\nxrandr --auto '${_rescue[@]}'\nfi\n'
+#		bash_end='else\nxrandr --auto '${_rescue[@]}'\nfi\n'
+		bash_end='fi\n'
 		echo -e "#! /bin/bash\n\n#sleep $delay\n$xrandr_init_src\n$bash_start\n$xrandr_init_dsp\n$bash_end" > $install_dir/xinitrc.prime
 		echo -e "#! /bin/bash\n\nsleep $delay\n$bash_start\n$xrandr_config\n$bash_end" > $install_dir/display.prime
 	else
-#		xrandr_init_src=''; xrandr_init_dsp=''; bash_start=''; bash_end=''
 		echo -e "" > $install_dir/xinitrc.prime
 		echo -e "" > $install_dir/display.prime
 	fi
-	## TODO monitor monitors.xml file if exist, then edit and parse.
-	## TEST offload system for render on nvidia.
+	## TODO ? look in monitors.xml file if exist, then edit and parse ?
+	## XXX TEST offload system for render on nvidia. driver v435.17 and up compatible hardware is mandatory. 
 	
-#	echo -e "#! /bin/bash\n\n#sleep $delay\n$xrandr_init_src\n$bash_start\n$xrandr_init_dsp\n$bash_end" > $install_dir/xinitrc.prime
-#	echo -e "#! /bin/bash\n\nsleep $delay\n$bash_start\n$xrandr_config\n$bash_end" > $install_dir/display.prime
 	if [ $(stat -c %a $install_dir/display.prime) -ne 755 ]; then
 		chmod 755 $install_dir/display.prime
 	fi
@@ -227,7 +214,7 @@ session_manager(){
 						mv -f $session_dir/$session_conf $session_dir/$session_conf.default
 						ln -sf $session_dir/$session_conf.default $session_dir/$session_conf
 					fi
-					case $ctrl_key in
+					case $conf in
 						'nvidia')
 							if [ $(cat $session_dir/$session_conf| grep -c "xinitrc.prime") -eq 0 ]; then
 								if ! [[ -s $session_dir/$session_conf.prime ]]; then
@@ -256,7 +243,7 @@ session_manager(){
 					esac
 				;;
 				'gdm'|'xdg')
-					case $ctrl_key in
+					case $conf in
 					'nvidia')
 						if ! [[ -h $session_dir/$session_conf ]]; then
 							ln -sf $install_dir/$session_conf $session_dir/$session_conf
@@ -270,7 +257,7 @@ session_manager(){
 					esac
 				;;
 				'kdm'|'sddm')
-					case $ctrl_key in
+					case $conf in
 					'nvidia')
 						if ! [[ -h $session_dir/$session_conf ]]; then
 							ln -sf $install_dir/xinitrc.prime $session_dir/$session_conf
@@ -295,14 +282,14 @@ session_manager(){
 abi_crtl(){
 ## enable xorg ABI23 behaviour to fix vsync and render. 
 	if [[ $abi_ver && $abi_ver -ge 23 ]]; then
-		if [ $(cat $install_dir/xorg.$ctrl_key.conf| grep -c "IgnoreABI" ) -eq 0 ]; then
+		if [ $(cat $install_dir/xorg.$conf.conf| grep -c "IgnoreABI" ) -eq 0 ]; then
 			server_flag="Section \"ServerFlags\"\n\tOption\t\"IgnoreABI\" \"1\"\nEndSection"
-			sed -Eni -e "s|^(## ABI config)$|\1\n$server_flag|g;p" $install_dir/xorg.$ctrl_key.conf
+			sed -Eni -e "s|^(## ABI config)$|\1\n$server_flag|g;p" $install_dir/xorg.$conf.conf
 		fi
 	fi
 }
 display_config(){
-	xorg_file=$install_dir/xorg.$ctrl_key.conf
+	xorg_file=$install_dir/xorg.$conf.conf
 	if [[ $current_display ]]; then
 		xrandr_outputs
 		session_manager
@@ -323,19 +310,22 @@ display_config(){
 go_for_nvidia(){
 	clean_files
 #	delay=5
-	ctrl_key=nvidia
+	ctrl_key=1
 	display_config
 	abi_crtl
-	printf "$nv_drv_64" > $nvidia64_lib_file
-	if [[ -d $nv_drv_32 ]]; then
-		printf "$nv_drv_32" > $nvidia32_lib_file
+	if [[ ! -s $nvidia64_lib_file || \
+	$(cat $nvidia64_lib_file| egrep -c "$nv_drv_64") -eq 0 ]]; then
+		printf "$nv_drv_64" > $nvidia64_lib_file
+		if [[ -d $nv_drv_32 ]]; then
+			printf "$nv_drv_32" > $nvidia32_lib_file
+		fi
+		ldconfig
 	fi
-	ldconfig
 }
 go_for_intel(){
 	clean_files
 	if [ $intel_nodelay -eq 1 ]; then delay=0; else delay=5; fi
-	ctrl_key=intel
+	ctrl_key=0
 	display_config
 }
 go_default(){
@@ -344,17 +334,34 @@ go_default(){
 	if [[ -f $nvidia32_lib_file ]]; then
 		printf '/usr/lib' > $nvidia32_lib_file
 	fi
+	ldconfig
+}
+go_offload(){
+	echo "In test, be patient..."; exit 0
+	## offload basicaly need nvida config with a different "Serverlayout" than default and glarmor loaded.
+	##		Section "ServerLayout"
+	##		Identifier	"layout"
+	##		Screen	0	"intel_screen"
+	##		Option		"AllowNVIDIAGPUScreens"
+	##		EndSection
+	## There is also an issue with GLX libs, nvidia's dev were introduce libglxserver_nvidia.so in place of libglx.so in ../xorg/modules/extensions with new drivers,
+	## This probably solve the libglx linking for custom driver installation. Anyways, My optimus hardware support ends with 390.129 drivers that only take care of libglx.so.
+	## All I can do is theorical.
+	## The solution reside probably with libglxserver.so installation in default xorg location and remove the "Section files" from xorg.conf. Can't tell at this point.
+	## I'll starting tests with zenvidia and see what's happening.
 }
 ## configure grub for modesetting and blacklist all nouveau drivers.
 grub_config
 bus_id_query
-current=$(file -p /etc/X11/xorg.conf| sed -En "s|^.*xorg.(.*).conf$|\1|p")
+# keeping this for debug purpose only.
+# current=$(file -p /etc/X11/xorg.conf| sed -En "s|^.*xorg.(.*).conf$|\1|p")
 if [[ -s /var/log/Xorg.0.log ]]; then
 	abi_ver=$(cat /var/log/Xorg.0.log| sed -En "s|^.*ABI.*Driver.* ([0-9]{2})\..*$|\1|p"| uniq)
 fi
 case $1 in
 	default ) go_default ;;
 	nvidia ) go_for_nvidia ;;
+	offload ) go_offload ;;
 	intel ) go_for_intel ;;
 #	test) xrandr_outputs; exit 0;;
 	*|help )
@@ -364,12 +371,12 @@ case $1 in
 		printf "\tdefault\t\tRescue to default throught commandline in case of XServer crash.\n"
 		printf "\thelp\t\tthis help.\n"
 		printf "\n\tYou need to logout from your session after each function.\n\n"
-		exit 1
+		exit 0
 	;;
 esac
 
 #ldconfig
-if [ $(file -p /etc/X11/xorg.conf| grep -c "xorg.$ctrl_key.conf") -gt 0 ]; then
+if [ $(file -p /etc/X11/xorg.conf| grep -c "xorg.$conf.conf") -gt 0 ]; then
 	printf "\nSuccessfully switched to %s completed.\n" "$1"
 	printf "Please logout for changes to take effect.\n"
 else

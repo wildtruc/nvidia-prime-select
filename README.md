@@ -19,6 +19,11 @@ Thus, I discided to go deeper to solve that particular issue and a few others as
 
 --------------
 # Update message
+### 2019-09-05 - v0.9.20
+**WARNING**: Do a 'sudo make install' this time, too much important things changed and don't forget to make a backup of /etc/nvidia-prime.
+(with root/admin terminal, do:)
+```mv -f /etc/nvidia-prime /etc/nvidia-prime.bak``` (to remove safely after controls)
+
 ### 2019-08-20
 There were many issues with grub config reported. It is hopefully fix and updated now. Please don't forget to report even if you think it's too minor and pointless.
 

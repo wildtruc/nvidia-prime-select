@@ -28,7 +28,7 @@ Section "Module"
 	Load		"glamoregl"
 EndSection
 
-## nvidia xorg connf
+## nvidia xorg conf
 Section "Device"
 	Identifier	"nvidia"
 	Driver		"nvidia"
@@ -72,7 +72,7 @@ Je vous conseille fortement d'installer et d'utiliser Midnight Commander (mc) po
 ## Basiques et attention
 Comme déjà noté, l'Offload n'est pris en charge que par le pilote beta 435.17 et une version patchée de Xorg.
 
-Cette version se trouve sur la branche principale Xorg sur GitHub. Seule la version Ubuntau PPA de cette version test de Xorg est fournie par le [README](https://download.nvidia.com/XFree86/Linux-x86_64/435.17/README/primerenderoffload.html) de Nvidia, mais on peut supposer que les branches 'testing' de dépots des autres distributions l'ont aussi incluse (à contrôler avant de faire quoique ce soit). Vous devez donc activer les dépots "testing" de votre distribution et installer les paquets Xorg.
+Cette version se trouve sur la branche principale Xorg sur GitHub. Seule la version Ubuntu PPA de cette version test de Xorg est fournie par le [README](https://download.nvidia.com/XFree86/Linux-x86_64/435.17/README/primerenderoffload.html) de Nvidia, mais on peut supposer que les branches 'testing' de dépots des autres distributions l'ont aussi incluse (à contrôler avant de faire quoique ce soit). Vous devez donc activer les dépots "testing" de votre distribution et installer les paquets Xorg.
 
 
 Attention: l'installation des paquets Xorg peut entrainer un sérieuse mis à jour de nombreux autres paquets dépendants et il peut après coup se passer de drôles de choses. Soyez prudent.
@@ -130,7 +130,7 @@ Vous pouvez définir plus finement la commande en ajoutant le nom du vendeur obt
 ```__NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0 __GLX_VENDOR_LIBRARY_NAME=nvidia glxgears```
 
 # Test direct sur application et variable d'environnement.
-Si tous les tests précédent ont retourné les résultat espéré. Vous pouve zdésormais tester vos applications.
+Si tous les tests précédent ont retourné les résultat espéré. Vous pouvez désormais tester vos applications.
 
 Le plus simple serait de tenter d'éditer les profiles dans **nvidia-settings** en ajoutant la variable **__NV_PRIME_RENDER_OFFLOAD=1** pour toutes les applications exécutées par le GPU Nvidia. Ce n'est pas une solution certaine, il n'est pas dit que le système de profiles accepte cette variable puisqu'elle ne fait pas partie officielement de la liste préformatée de **nvidia-settings**.
 
@@ -144,6 +144,9 @@ La solution réside soit dans une entraide interactive avec les utilisateurs les
 Si cette solution vous semble convenable vous pouvez faire un don d'1€ à 5€ par utilisateurs motivés avec la référence 'prime' à l'adresse paypal suivante (noneltd[at]gmail[dot]com).
 
 N'ayant pas d'idée particulière pour le choix d'un ordinateur portable optimus qui devra tenir la route sur une longue période, vous pourvez en suggérer un dans le sujet ouvert à cet effet dans l'onglet 'issues'.
+
+## NOTE IMPORTANTE
+Cette technologie va devenir dans un futur très proche le comportement par défaut des pilotes nvidia. Alors, restez informé et pensez à contribuer (code, tests, discussions) si vous pensez que finalement une donation pour un nouveau matériel n'est pas si importante.
 
 
 

@@ -11,6 +11,7 @@ install:
 	install -Dm755 -t /usr/bin/ nvidia-prime-ui
 	install -Dm755 -t /usr/sbin/ nvidia-prime-select
 	install -Dm644 -t $(INSTALL_DIR)/ xorg.nvidia.conf
+	install -Dm644 -t $(INSTALL_DIR)/ xorg.offload.conf
 	install -Dm644 -t $(INSTALL_DIR)/ xorg.intel.conf
 	install -Dm644 -t $(INSTALL_DIR)/ library.conf
 	install -Dm644 -t $(INSTALL_DIR)/ options.conf
@@ -28,6 +29,7 @@ update:
 	install -C -Dm755 -t /usr/bin/ nvidia-prime-ui
 	install -C -Dm755 -t /usr/sbin/ nvidia-prime-select
 	install -C -Dm644 -t $(INSTALL_DIR)/ xorg.nvidia.conf
+	install -C -Dm644 -t $(INSTALL_DIR)/ xorg.offload.conf
 	install -C -Dm644 -t $(INSTALL_DIR)/ xorg.intel.conf
 	install -Dm644 -t $(INSTALL_DIR)/ options.conf
 	install -Dm644 -t $(INSTALL_DIR)/ report.sample

@@ -20,6 +20,9 @@
 ## author : wildtruc@noneltd.net
 
 ## TODO
+# XXX reconfigurer le xml xrandr
+# XXX créer un UI pour les fichiers de config.
+# XXX indiquer le dir source des librairies detectées pour l'UI de config de la source des ficheirs.  (use 'find)')
 # indiquer la précédence de monitor.xml généré par l'ui de xrandr.
 
 vn='<span weight=\"normal\">'
@@ -55,7 +58,7 @@ m_prime_02="nvidia"
 wrn_prime_01="Prime will be set to $j%s$end."
 wrn_prime_02="\nYou may now restart the user session to take effect."
 # nvidia-prime-select path and files
-xorg_path=/etc/nvidia-prime
+xorg_prime=/etc/nvidia-prime
 lib_conf=/etc/nvidia-prime/library.conf
 opt_conf=/etc/nvidia-prime/options.conf
 ## su cmd is currently manages by polkit
@@ -65,7 +68,7 @@ edit_options(){
 	--text-info --editable --filename="$opt_conf" --checkbox="Confirm to overwrite" \
 	--text="$vb\\Edit nvidia-prime-select and GUI options.$end")
 	if [ $? = 0 ]; then
-		pkexec sh -c "echo -e \"$edit_options_conf\" > $opt_conf"
+		pkexec bash -c "echo -e \"$edit_options_conf\" > $opt_conf"
 		notify-send -t 5000 -u low  "Options data saved."
 	fi
 	bash -c nvidia-prime-ui
@@ -77,7 +80,7 @@ edit_conf(){
 	--text="$vb\\Edit libraries path to fit your system install.$end")
 	if [ $? = 0 ]; then
 		if [ $(printf "$edit_lib_conf"| sed -En "s/^(.*)='(.*)'$/\2/g;p"| grep -c .) -gt 0 ]; then
-			pkexec sh -c "echo -e \"$edit_lib_conf\" > $lib_conf"
+			pkexec bash -c "echo -e \"$edit_lib_conf\" > $lib_conf"
 			notify-send -t 5000 -u low  "libraries data saved."
 		fi
 	fi
@@ -85,13 +88,18 @@ edit_conf(){
 	exit 0
 }
 edit_xorg(){
+	if [ $(file /etc/X11/xorg.conf | grep -c "$xorg_prime.*$current_set") -eq 0 ]; then
+		xorg_file=$xorg_prime/$(file /etc/X11/xorg.conf | sed -n "s/^.*\///p")
+	else
+		xorg_file=$xorg_prime/xorg.$current_set.conf
+	fi
 	edit_xorg_conf=$(zenity --width=500 --height=400 --title="Xorg $current_set conf editor" \
 	--icon-name=nvidia-prime --text-info --editable \
-	--filename="$xorg_path/xorg.$current_set.conf" --checkbox="Confirm to overwrite" \
+	--filename="$xorg_file" --checkbox="Confirm to overwrite" \
 	--text="$vb\\Edit current xorg conf as appropriate to fit your needs.$end")
 	if [ $? = 0 ]; then
 		_xorg_conf=$(echo -e "$edit_xorg_conf"| sed -En 's|\"|\\"|g;p')
-		pkexec sh -c "echo -e \"$_xorg_conf\" > $xorg_path/xorg.$current_set.conf"
+		pkexec bash -c "echo -e \"$_xorg_conf\" > $xorg_file"
 		notify-send -t 5000 -u low  "Xorg conf file saved."
 	fi
 	bash -c nvidia-prime-ui
@@ -116,23 +124,34 @@ setup_prime(){
 }
 #root_id
 unset setup_list setup_option _pset
+#setup_option=(
+#"$menu_prime_01;$m_prime_01;/etc/X11/xorg.conf"
+#"$menu_prime_02;$m_prime_02;/etc/X11/xorg.conf"
+#"$menu_prime_03;;"
+#"$menu_prime_04;;"
+#"$menu_prime_05;;"
+#)
 setup_option=(
-"$menu_prime_01;$m_prime_01;/etc/X11/xorg.conf"
-"$menu_prime_02;$m_prime_02;/etc/X11/xorg.conf"
-"$menu_prime_03;;"
-"$menu_prime_04;;"
-"$menu_prime_05;;"
+"$menu_prime_01;$m_prime_01"
+"$menu_prime_02;$m_prime_02"
+"$menu_prime_03;"
+"$menu_prime_04;"
+"$menu_prime_05;"
 )
 n=1
 for p_set in "${setup_option[@]}"; do
 	pc_set=$(printf "$p_set"|cut -d';' -f1)
 	pc_msg=$(printf "$p_set"|cut -d';' -f2)
-	pc_file=$(printf "$p_set"|cut -d';' -f3)
+#	pc_file=$(printf "$p_set"|cut -d';' -f3)
 	setup_list+=("false" "$n" "$pc_set")
-	if [ $(file -p /etc/X11/xorg.conf| grep -c "xorg.$pc_msg.conf") -gt 0 ]; then
-		current_set=$pc_msg
+	if [[ $pc_msg != '' ]]; then
+		if [ $(file -p /etc/X11/xorg.conf| grep -c "xorg.$pc_msg.conf") -gt 0 ]; then
+			current_set=$pc_msg
+		fi
+	else
+		current_set=$(cat /etc/X11/xorg.conf| grep -v '#'| sed -En "s/^.*Screen.*0.*\"(.*)_screen\".*$/\1/p")
 	fi
-	n=$[ $n+1 ]
+	((n++))
 done
 
 if [[ "$current_set" ]]; then
