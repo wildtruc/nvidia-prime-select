@@ -1,6 +1,10 @@
 # nvidia-prime-select
 This is a fork of **[FedoraPrime](https://github.com/bosim/FedoraPrime)** enhanced for all linux distributions.
 
+**PROJECT OUT OF DATE**
+PRIME scripts and techniques have now evolved far too much and this script should be considered obsolete.
+As we no longer have the means to control its operation, it is preferable to move it to archive status.
+
 ------------
 ## Offlaod Technologie Testing preview
 Please read [Offload](OFFLOAD.md) file for more details.
